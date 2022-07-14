@@ -1,9 +1,13 @@
 build/*
 
+# Editor config
+.vscode
+
 # Prerequisites
 *.d
 
 # Compiled Object files
+.cache
 *.slo
 *.lo
 *.o
