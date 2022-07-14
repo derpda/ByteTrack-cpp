@@ -236,9 +236,8 @@ byte_track::BYTETracker::subStracks(
   }
 
   std::vector<STrackPtr> res;
-  std::map<int, STrackPtr>::iterator it;
-  for (it = stracks.begin(); it != stracks.end(); ++it) {
-    res.push_back(it->second);
+  for (const auto &strack : stracks) {
+    res.push_back(strack.second);
   }
 
   return res;
