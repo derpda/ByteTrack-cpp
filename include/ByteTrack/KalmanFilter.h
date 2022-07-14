@@ -1,39 +1,39 @@
 #pragma once
 
-#include "Eigen/Dense"
-
 #include "ByteTrack/Rect.h"
 
-namespace byte_track
-{
-class KalmanFilter
-{
-public:
-    using DetectBox = Xyah<float>;
+#include "Eigen/Dense"
 
-    using StateMean = Eigen::Matrix<float, 1, 8, Eigen::RowMajor>;
-    using StateCov = Eigen::Matrix<float, 8, 8, Eigen::RowMajor>;
+namespace byte_track {
+class KalmanFilter {
+ public:
+  using DetectBox = Xyah<float>;
 
-    using StateHMean = Eigen::Matrix<float, 1, 4, Eigen::RowMajor>;
-    using StateHCov = Eigen::Matrix<float, 4, 4, Eigen::RowMajor>;
+  using StateMean = Eigen::Matrix<float, 1, 8, Eigen::RowMajor>;
+  using StateCov = Eigen::Matrix<float, 8, 8, Eigen::RowMajor>;
 
-    KalmanFilter(const float& std_weight_position = 1. / 20,
-                 const float& std_weight_velocity = 1. / 160);
+  using StateHMean = Eigen::Matrix<float, 1, 4, Eigen::RowMajor>;
+  using StateHCov = Eigen::Matrix<float, 4, 4, Eigen::RowMajor>;
 
-    void initiate(StateMean& mean, StateCov& covariance, const DetectBox& measurement);
+  KalmanFilter(const float& std_weight_position = 1. / 20,
+               const float& std_weight_velocity = 1. / 160);
 
-    void predict(StateMean& mean, StateCov& covariance);
+  void initiate(StateMean& mean, StateCov& covariance,
+                const DetectBox& measurement);
 
-    void update(StateMean& mean, StateCov& covariance, const DetectBox& measurement);
+  void predict(StateMean& mean, StateCov& covariance);
 
-private:
-    float std_weight_position_;
-    float std_weight_velocity_;
+  void update(StateMean& mean, StateCov& covariance,
+              const DetectBox& measurement);
 
-    Eigen::Matrix<float, 8, 8, Eigen::RowMajor> motion_mat_;
-    Eigen::Matrix<float, 4, 8, Eigen::RowMajor> update_mat_;
+ private:
+  float std_weight_position_;
+  float std_weight_velocity_;
 
-    void project(StateHMean &projected_mean, StateHCov &projected_covariance,
-                 const StateMean& mean, const StateCov& covariance);
+  Eigen::Matrix<float, 8, 8, Eigen::RowMajor> motion_mat_;
+  Eigen::Matrix<float, 4, 8, Eigen::RowMajor> update_mat_;
+
+  void project(StateHMean& projected_mean, StateHCov& projected_covariance,
+               const StateMean& mean, const StateCov& covariance);
 };
-}
+}  // namespace byte_track
