@@ -3,30 +3,29 @@
 #include <algorithm>
 
 template <typename T>
-byte_track::Rect<T>::Rect(const T& x, const T& y, const T& width,
-                          const T& height)
+byte_track::Rect<T>::Rect(T x, T y, T width, T height)
     : tlwh({x, y, width, height}) {}
 
 template <typename T>
 byte_track::Rect<T>::~Rect() {}
 
 template <typename T>
-const T& byte_track::Rect<T>::x() const {
+T byte_track::Rect<T>::x() const {
   return tlwh[0];
 }
 
 template <typename T>
-const T& byte_track::Rect<T>::y() const {
+T byte_track::Rect<T>::y() const {
   return tlwh[1];
 }
 
 template <typename T>
-const T& byte_track::Rect<T>::width() const {
+T byte_track::Rect<T>::width() const {
   return tlwh[2];
 }
 
 template <typename T>
-const T& byte_track::Rect<T>::height() const {
+T byte_track::Rect<T>::height() const {
   return tlwh[3];
 }
 
@@ -51,12 +50,12 @@ T& byte_track::Rect<T>::height() {
 }
 
 template <typename T>
-const T& byte_track::Rect<T>::tl_x() const {
+T byte_track::Rect<T>::tl_x() const {
   return tlwh[0];
 }
 
 template <typename T>
-const T& byte_track::Rect<T>::tl_y() const {
+T byte_track::Rect<T>::tl_y() const {
   return tlwh[1];
 }
 

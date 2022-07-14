@@ -8,11 +8,9 @@
 #include <utility>
 #include <vector>
 
-byte_track::BYTETracker::BYTETracker(const int &frame_rate,
-                                     const int &track_buffer,
-                                     const float &track_thresh,
-                                     const float &high_thresh,
-                                     const float &match_thresh)
+byte_track::BYTETracker::BYTETracker(int frame_rate, int track_buffer,
+                                     float track_thresh, float high_thresh,
+                                     float match_thresh)
     : track_thresh_(track_thresh),
       high_thresh_(high_thresh),
       match_thresh_(match_thresh),
@@ -289,10 +287,10 @@ void byte_track::BYTETracker::removeDuplicateStracks(
 }
 
 void byte_track::BYTETracker::linearAssignment(
-    const std::vector<std::vector<float>> &cost_matrix,
-    const int &cost_matrix_size, const int &cost_matrix_size_size,
-    const float &thresh, std::vector<std::vector<int>> &matches,
-    std::vector<int> &a_unmatched, std::vector<int> &b_unmatched) const {
+    const std::vector<std::vector<float>> &cost_matrix, int cost_matrix_size,
+    int cost_matrix_size_size, float thresh,
+    std::vector<std::vector<int>> &matches, std::vector<int> &a_unmatched,
+    std::vector<int> &b_unmatched) const {
   if (cost_matrix.size() == 0) {
     for (int i = 0; i < cost_matrix_size; i++) {
       a_unmatched.push_back(i);

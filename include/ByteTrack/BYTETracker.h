@@ -15,9 +15,9 @@ class BYTETracker {
  public:
   using STrackPtr = std::shared_ptr<STrack>;
 
-  BYTETracker(const int &frame_rate = 30, const int &track_buffer = 30,
-              const float &track_thresh = 0.5, const float &high_thresh = 0.6,
-              const float &match_thresh = 0.8);
+  BYTETracker(int frame_rate = 30, int track_buffer = 30,
+              float track_thresh = 0.5, float high_thresh = 0.6,
+              float match_thresh = 0.8);
   ~BYTETracker();
 
   std::vector<STrackPtr> update(const std::vector<Object> &objects);
@@ -37,9 +37,8 @@ class BYTETracker {
                               std::vector<STrackPtr> &b_res) const;
 
   void linearAssignment(const std::vector<std::vector<float>> &cost_matrix,
-                        const int &cost_matrix_size,
-                        const int &cost_matrix_size_size, const float &thresh,
-                        std::vector<std::vector<int>> &matches,
+                        int cost_matrix_size, int cost_matrix_size_size,
+                        float thresh, std::vector<std::vector<int>> &matches,
                         std::vector<int> &b_unmatched,
                         std::vector<int> &a_unmatched) const;
 
@@ -58,10 +57,10 @@ class BYTETracker {
                    bool return_cost = true) const;
 
  private:
-  const float track_thresh_;
-  const float high_thresh_;
-  const float match_thresh_;
-  const size_t max_time_lost_;
+  float track_thresh_;
+  float high_thresh_;
+  float match_thresh_;
+  size_t max_time_lost_;
 
   size_t frame_id_;
   size_t track_id_count_;

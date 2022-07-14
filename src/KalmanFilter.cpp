@@ -2,8 +2,8 @@
 
 #include <cstddef>
 
-byte_track::KalmanFilter::KalmanFilter(const float &std_weight_position,
-                                       const float &std_weight_velocity)
+byte_track::KalmanFilter::KalmanFilter(float std_weight_position,
+                                       float std_weight_velocity)
     : std_weight_position_(std_weight_position),
       std_weight_velocity_(std_weight_velocity) {
   constexpr size_t ndim = 4;

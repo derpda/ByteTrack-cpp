@@ -2,7 +2,7 @@
 
 #include <cstddef>
 
-byte_track::STrack::STrack(const Rect<float>& rect, const float& score)
+byte_track::STrack::STrack(const Rect<float>& rect, float score)
     : kalman_filter_(),
       mean_(),
       covariance_(),
@@ -25,23 +25,18 @@ const byte_track::STrackState& byte_track::STrack::getSTrackState() const {
   return state_;
 }
 
-const bool& byte_track::STrack::isActivated() const { return is_activated_; }
-const float& byte_track::STrack::getScore() const { return score_; }
+bool byte_track::STrack::isActivated() const { return is_activated_; }
+float byte_track::STrack::getScore() const { return score_; }
 
-const size_t& byte_track::STrack::getTrackId() const { return track_id_; }
+size_t byte_track::STrack::getTrackId() const { return track_id_; }
 
-const size_t& byte_track::STrack::getFrameId() const { return frame_id_; }
+size_t byte_track::STrack::getFrameId() const { return frame_id_; }
 
-const size_t& byte_track::STrack::getStartFrameId() const {
-  return start_frame_id_;
-}
+size_t byte_track::STrack::getStartFrameId() const { return start_frame_id_; }
 
-const size_t& byte_track::STrack::getTrackletLength() const {
-  return tracklet_len_;
-}
+size_t byte_track::STrack::getTrackletLength() const { return tracklet_len_; }
 
-void byte_track::STrack::activate(const size_t& frame_id,
-                                  const size_t& track_id) {
+void byte_track::STrack::activate(size_t frame_id, size_t track_id) {
   kalman_filter_.initiate(mean_, covariance_, rect_.getXyah());
 
   updateRect();
@@ -56,9 +51,8 @@ void byte_track::STrack::activate(const size_t& frame_id,
   tracklet_len_ = 0;
 }
 
-void byte_track::STrack::reActivate(const STrack& new_track,
-                                    const size_t& frame_id,
-                                    const int& new_track_id) {
+void byte_track::STrack::reActivate(const STrack& new_track, size_t frame_id,
+                                    int new_track_id) {
   kalman_filter_.update(mean_, covariance_, new_track.getRect().getXyah());
 
   updateRect();
@@ -80,8 +74,7 @@ void byte_track::STrack::predict() {
   kalman_filter_.predict(mean_, covariance_);
 }
 
-void byte_track::STrack::update(const STrack& new_track,
-                                const size_t& frame_id) {
+void byte_track::STrack::update(const STrack& new_track, size_t frame_id) {
   kalman_filter_.update(mean_, covariance_, new_track.getRect().getXyah());
 
   updateRect();

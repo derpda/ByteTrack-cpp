@@ -18,22 +18,22 @@ class Rect {
   Tlwh<T> tlwh;
 
   Rect() = default;
-  Rect(const T &x, const T &y, const T &width, const T &height);
+  Rect(T x, T y, T width, T height);
 
   ~Rect();
 
-  const T &x() const;
-  const T &y() const;
-  const T &width() const;
-  const T &height() const;
+  T x() const;
+  T y() const;
+  T width() const;
+  T height() const;
 
   T &x();
   T &y();
   T &width();
   T &height();
 
-  const T &tl_x() const;
-  const T &tl_y() const;
+  T tl_x() const;
+  T tl_y() const;
   T br_x() const;
   T br_y() const;
 
