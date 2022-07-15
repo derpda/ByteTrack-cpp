@@ -3,22 +3,8 @@
 #include <cstddef>
 #include <cstring>
 #include <stdexcept>
-
-#define LAPJV_CPP_NEW(x, t, n)                   \
-  if ((x = (t *)malloc(sizeof(t) * (n))) == 0) { \
-    return -1;                                   \
-  }
-#define LAPJV_CPP_FREE(x) \
-  if (x != 0) {           \
-    free(x);              \
-    x = 0;                \
-  }
-#define LAPJV_CPP_SWAP_INDICES(a, b) \
-  {                                  \
-    int _temp_index = a;             \
-    a = b;                           \
-    b = _temp_index;                 \
-  }
+#include <utility>
+#include <vector>
 
 namespace {
 constexpr size_t LARGE = 1000000;
@@ -31,10 +17,10 @@ enum class fp_t {
 
 /** Column-reduction and reduction transfer for a dense cost matrix.
  */
-int _ccrrt_dense(const size_t n, double *cost[], int *free_rows, int *x, int *y,
-                 double *v) {
+int _ccrrt_dense(const size_t n, double *cost[], std::vector<int> &free_rows,
+                 int *x, int *y, std::vector<double> &v) {
   int n_free_rows;
-  bool *unique;
+  std::vector<bool> unique(n, true);
 
   for (size_t i = 0; i < n; i++) {
     x[i] = -1;
@@ -50,8 +36,6 @@ int _ccrrt_dense(const size_t n, double *cost[], int *free_rows, int *x, int *y,
       }
     }
   }
-  LAPJV_CPP_NEW(unique, bool, n);
-  memset(unique, true, n);
   {
     int j = n;
     do {
@@ -84,14 +68,14 @@ int _ccrrt_dense(const size_t n, double *cost[], int *free_rows, int *x, int *y,
       v[j] -= min;
     }
   }
-  LAPJV_CPP_FREE(unique);
   return n_free_rows;
 }
 
 /** Augmenting row reduction for a dense cost matrix.
  */
 int _carr_dense(const size_t n, double *cost[], const size_t n_free_rows,
-                int *free_rows, int *x, int *y, double *v) {
+                std::vector<int> &free_rows, int *x, int *y,
+                std::vector<double> &v) {
   size_t current = 0;
   int new_free_rows = 0;
   size_t rr_cnt = 0;
@@ -151,7 +135,8 @@ int _carr_dense(const size_t n, double *cost[], const size_t n_free_rows,
 
 /** Find columns with minimum d[j] and put them on the SCAN list.
  */
-size_t _find_dense(const size_t n, size_t lo, double *d, int *cols, int *y) {
+size_t _find_dense(const size_t n, size_t lo, const std::vector<double> &d,
+                   std::vector<int> &cols, int *y) {
   size_t hi = lo + 1;
   double mind = d[cols[lo]];
   for (size_t k = hi; k < n; k++) {
@@ -171,7 +156,8 @@ size_t _find_dense(const size_t n, size_t lo, double *d, int *cols, int *y) {
 // Scan all columns in TODO starting from arbitrary column in SCAN
 // and try to decrease d of the TODO columns using the SCAN column.
 int _scan_dense(const size_t n, double *cost[], size_t *plo, size_t *phi,
-                double *d, int *cols, int *pred, int *y, double *v) {
+                std::vector<double> &d, std::vector<int> &cols,
+                std::vector<int> &pred, int *y, const std::vector<double> &v) {
   size_t lo = *plo;
   size_t hi = *phi;
   double h, cred_ij;
@@ -211,15 +197,12 @@ int _scan_dense(const size_t n, double *cost[], size_t *plo, size_t *phi,
  * \return The closest free column index.
  */
 int find_path_dense(const size_t n, double *cost[], const int start_i, int *y,
-                    double *v, int *pred) {
+                    std::vector<double> &v, std::vector<int> &pred) {
   size_t lo = 0, hi = 0;
   int final_j = -1;
   size_t n_ready = 0;
-  int *cols;
-  double *d;
-
-  LAPJV_CPP_NEW(cols, int, n);
-  LAPJV_CPP_NEW(d, double, n);
+  std::vector<int> cols(n);
+  std::vector<double> d(n);
 
   for (size_t i = 0; i < n; i++) {
     cols[i] = i;
@@ -252,42 +235,38 @@ int find_path_dense(const size_t n, double *cost[], const int start_i, int *y,
     }
   }
 
-  LAPJV_CPP_FREE(cols);
-  LAPJV_CPP_FREE(d);
-
   return final_j;
 }
 
 /** Augment for a dense cost matrix.
  */
 int _ca_dense(const size_t n, double *cost[], const size_t n_free_rows,
-              int *free_rows, int *x, int *y, double *v) {
-  int *pred;
+              const std::vector<int> &free_rows, int *x, int *y,
+              std::vector<double> &v) {
+  std::vector<int> pred(n);
 
-  LAPJV_CPP_NEW(pred, int, n);
-
-  for (int *pfree_i = free_rows; pfree_i < free_rows + n_free_rows; pfree_i++) {
-    int i = -1, j;
+  for (size_t row_n = 0; row_n < n_free_rows; ++row_n) {
+    const int free_row = free_rows[row_n];
+    int i = -1;
     size_t k = 0;
 
-    j = find_path_dense(n, cost, *pfree_i, y, v, pred);
+    int j = find_path_dense(n, cost, free_row, y, v, pred);
     if (j < 0) {
       throw std::runtime_error("Error occured in _ca_dense(): j < 0");
     }
     if (j >= static_cast<int>(n)) {
       throw std::runtime_error("Error occured in _ca_dense(): j >= n");
     }
-    while (i != *pfree_i) {
+    while (i != free_row) {
       i = pred[j];
       y[j] = i;
-      LAPJV_CPP_SWAP_INDICES(j, x[i]);
+      std::swap(j, x[i]);
       k++;
       if (k >= n) {
         throw std::runtime_error("Error occured in _ca_dense(): k >= n");
       }
     }
   }
-  LAPJV_CPP_FREE(pred);
   return 0;
 }
 }  // namespace
@@ -295,11 +274,8 @@ int _ca_dense(const size_t n, double *cost[], const size_t n_free_rows,
 /** Solve dense sparse LAP. */
 int byte_track::lapjv_internal(const size_t n, double *cost[], int *x, int *y) {
   int ret;
-  int *free_rows;
-  double *v;
-
-  LAPJV_CPP_NEW(free_rows, int, n);
-  LAPJV_CPP_NEW(v, double, n);
+  std::vector<int> free_rows(n);
+  std::vector<double> v(n);
   ret = _ccrrt_dense(n, cost, free_rows, x, y, v);
   int i = 0;
   while (ret > 0 && i < 2) {
@@ -309,11 +285,5 @@ int byte_track::lapjv_internal(const size_t n, double *cost[], int *x, int *y) {
   if (ret > 0) {
     ret = _ca_dense(n, cost, ret, free_rows, x, y, v);
   }
-  LAPJV_CPP_FREE(v);
-  LAPJV_CPP_FREE(free_rows);
   return ret;
 }
-
-#undef LAPJV_CPP_NEW
-#undef LAPJV_CPP_FREE
-#undef LAPJV_CPP_SWAP_INDICES
