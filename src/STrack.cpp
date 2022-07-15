@@ -2,7 +2,8 @@
 
 #include <cstddef>
 
-byte_track::STrack::STrack(const Rect<float>& rect, int label, float score)
+namespace byte_track {
+STrack::STrack(const Rect<float>& rect, int label, float score)
     : kalman_filter_(),
       mean_(),
       covariance_(),
@@ -16,31 +17,27 @@ byte_track::STrack::STrack(const Rect<float>& rect, int label, float score)
       start_frame_id_(0),
       tracklet_len_(0) {}
 
-byte_track::STrack::~STrack() {}
+STrack::~STrack() {}
 
-const byte_track::Rect<float>& byte_track::STrack::getRect() const {
-  return rect_;
-}
+const Rect<float>& STrack::getRect() const { return rect_; }
 
-int byte_track::STrack::getLabel() const { return label_; }
+int STrack::getLabel() const { return label_; }
 
-float byte_track::STrack::getScore() const { return score_; }
+float STrack::getScore() const { return score_; }
 
-const byte_track::STrackState& byte_track::STrack::getSTrackState() const {
-  return state_;
-}
+const STrackState& STrack::getSTrackState() const { return state_; }
 
-bool byte_track::STrack::isActivated() const { return is_activated_; }
+bool STrack::isActivated() const { return is_activated_; }
 
-size_t byte_track::STrack::getTrackId() const { return track_id_; }
+size_t STrack::getTrackId() const { return track_id_; }
 
-size_t byte_track::STrack::getFrameId() const { return frame_id_; }
+size_t STrack::getFrameId() const { return frame_id_; }
 
-size_t byte_track::STrack::getStartFrameId() const { return start_frame_id_; }
+size_t STrack::getStartFrameId() const { return start_frame_id_; }
 
-size_t byte_track::STrack::getTrackletLength() const { return tracklet_len_; }
+size_t STrack::getTrackletLength() const { return tracklet_len_; }
 
-void byte_track::STrack::activate(size_t frame_id, size_t track_id) {
+void STrack::activate(size_t frame_id, size_t track_id) {
   kalman_filter_.initiate(mean_, covariance_, rect_.getXyah());
 
   updateRect();
@@ -55,8 +52,8 @@ void byte_track::STrack::activate(size_t frame_id, size_t track_id) {
   tracklet_len_ = 0;
 }
 
-void byte_track::STrack::reActivate(const STrack& new_track, size_t frame_id,
-                                    int new_track_id) {
+void STrack::reActivate(const STrack& new_track, size_t frame_id,
+                        int new_track_id) {
   kalman_filter_.update(mean_, covariance_, new_track.getRect().getXyah());
 
   updateRect();
@@ -71,14 +68,14 @@ void byte_track::STrack::reActivate(const STrack& new_track, size_t frame_id,
   tracklet_len_ = 0;
 }
 
-void byte_track::STrack::predict() {
+void STrack::predict() {
   if (state_ != STrackState::Tracked) {
     mean_[7] = 0;
   }
   kalman_filter_.predict(mean_, covariance_);
 }
 
-void byte_track::STrack::update(const STrack& new_track, size_t frame_id) {
+void STrack::update(const STrack& new_track, size_t frame_id) {
   kalman_filter_.update(mean_, covariance_, new_track.getRect().getXyah());
 
   updateRect();
@@ -90,13 +87,14 @@ void byte_track::STrack::update(const STrack& new_track, size_t frame_id) {
   tracklet_len_++;
 }
 
-void byte_track::STrack::markAsLost() { state_ = STrackState::Lost; }
+void STrack::markAsLost() { state_ = STrackState::Lost; }
 
-void byte_track::STrack::markAsRemoved() { state_ = STrackState::Removed; }
+void STrack::markAsRemoved() { state_ = STrackState::Removed; }
 
-void byte_track::STrack::updateRect() {
+void STrack::updateRect() {
   rect_.width() = mean_[2] * mean_[3];
   rect_.height() = mean_[3];
   rect_.x() = mean_[0] - rect_.width() / 2;
   rect_.y() = mean_[1] - rect_.height() / 2;
 }
+}  // namespace byte_track
