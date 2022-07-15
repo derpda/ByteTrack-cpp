@@ -4,6 +4,7 @@
 #include "ByteTrack/STrack.h"
 #include "ByteTrack/lapjv.h"
 
+#include <array>
 #include <cstddef>
 #include <limits>
 #include <map>
@@ -23,6 +24,21 @@ class BYTETracker {
   std::vector<STrackPtr> update(const std::vector<Object> &objects);
 
  private:
+  std::array<std::vector<STrackPtr>, 4> iou_association(
+      const std::vector<STrackPtr> &strack_pool,
+      const std::vector<STrackPtr> &det_stracks);
+
+  std::vector<STrackPtr> low_score_association(
+      std::vector<STrackPtr> &current_tracked_stracks,
+      std::vector<STrackPtr> &refind_stracks,
+      const std::vector<STrackPtr> det_low_stracks,
+      const std::vector<STrackPtr> &remain_tracked_stracks);
+
+  std::vector<STrackPtr> init_new_stracks(
+      std::vector<STrackPtr> &current_tracked_stracks,
+      const std::vector<STrackPtr> &non_active_stracks,
+      const std::vector<STrackPtr> &remain_det_stracks);
+
   std::vector<STrackPtr> jointStracks(
       const std::vector<STrackPtr> &a_tlist,
       const std::vector<STrackPtr> &b_tlist) const;

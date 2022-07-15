@@ -1,5 +1,7 @@
 #include "ByteTrack/BYTETracker.h"
 
+#include <algorithm>
+#include <array>
 #include <cstddef>
 #include <limits>
 #include <map>
@@ -9,9 +11,10 @@
 #include <utility>
 #include <vector>
 
-byte_track::BYTETracker::BYTETracker(int frame_rate, int track_buffer,
-                                     float track_thresh, float high_thresh,
-                                     float match_thresh)
+namespace byte_track {
+
+BYTETracker::BYTETracker(int frame_rate, int track_buffer, float track_thresh,
+                         float high_thresh, float match_thresh)
     : track_thresh_(track_thresh),
       high_thresh_(high_thresh),
       match_thresh_(match_thresh),
@@ -19,9 +22,124 @@ byte_track::BYTETracker::BYTETracker(int frame_rate, int track_buffer,
       frame_id_(0),
       track_id_count_(0) {}
 
-byte_track::BYTETracker::~BYTETracker() {}
+BYTETracker::~BYTETracker() {}
 
-std::vector<byte_track::BYTETracker::STrackPtr> byte_track::BYTETracker::update(
+std::array<std::vector<BYTETracker::STrackPtr>, 4> BYTETracker::iou_association(
+    const std::vector<STrackPtr> &strack_pool,
+    const std::vector<STrackPtr> &det_stracks) {
+  std::vector<std::vector<int>> matches_idx;
+  std::vector<int> unmatch_detection_idx, unmatch_track_idx;
+
+  const auto dists = calcIouDistance(strack_pool, det_stracks);
+  linearAssignment(dists, strack_pool.size(), det_stracks.size(), match_thresh_,
+                   matches_idx, unmatch_track_idx, unmatch_detection_idx);
+
+  std::vector<STrackPtr> current_tracked_stracks;
+  std::vector<STrackPtr> refind_stracks;
+  for (const auto &match_idx : matches_idx) {
+    const auto track = strack_pool[match_idx[0]];
+    const auto det = det_stracks[match_idx[1]];
+    if (track->getSTrackState() == STrackState::Tracked) {
+      track->update(*det, frame_id_);
+      current_tracked_stracks.push_back(track);
+    } else {
+      track->reActivate(*det, frame_id_);
+      refind_stracks.push_back(track);
+    }
+  }
+
+  std::vector<STrackPtr> remain_det_stracks;
+  for (const auto &unmatch_idx : unmatch_detection_idx) {
+    remain_det_stracks.push_back(det_stracks[unmatch_idx]);
+  }
+
+  std::vector<STrackPtr> remain_tracked_stracks;
+  for (const auto &unmatch_idx : unmatch_track_idx) {
+    if (strack_pool[unmatch_idx]->getSTrackState() == STrackState::Tracked) {
+      remain_tracked_stracks.push_back(strack_pool[unmatch_idx]);
+    }
+  }
+  return {std::move(current_tracked_stracks), std::move(remain_tracked_stracks),
+          std::move(remain_det_stracks), std::move(refind_stracks)};
+}
+
+std::vector<BYTETracker::STrackPtr> BYTETracker::low_score_association(
+    std::vector<STrackPtr> &current_tracked_stracks,
+    std::vector<STrackPtr> &refind_stracks,
+    const std::vector<STrackPtr> det_low_stracks,
+    const std::vector<STrackPtr> &remain_tracked_stracks) {
+  std::vector<std::vector<int>> matches_idx;
+  std::vector<int> unmatch_track_idx, unmatch_detection_idx;
+
+  const auto dists = calcIouDistance(remain_tracked_stracks, det_low_stracks);
+  linearAssignment(dists, remain_tracked_stracks.size(), det_low_stracks.size(),
+                   0.5, matches_idx, unmatch_track_idx, unmatch_detection_idx);
+
+  for (const auto &match_idx : matches_idx) {
+    const auto track = remain_tracked_stracks[match_idx[0]];
+    const auto det = det_low_stracks[match_idx[1]];
+    if (track->getSTrackState() == STrackState::Tracked) {
+      track->update(*det, frame_id_);
+      current_tracked_stracks.push_back(track);
+    } else {
+      track->reActivate(*det, frame_id_);
+      refind_stracks.push_back(track);
+    }
+  }
+
+  std::vector<STrackPtr> current_lost_stracks;
+  for (const auto &unmatch_track : unmatch_track_idx) {
+    const auto track = remain_tracked_stracks[unmatch_track];
+    if (track->getSTrackState() != STrackState::Lost) {
+      track->markAsLost();
+      current_lost_stracks.push_back(track);
+    }
+  }
+  return current_lost_stracks;
+}
+
+std::vector<BYTETracker::STrackPtr> BYTETracker::init_new_stracks(
+    std::vector<STrackPtr> &current_tracked_stracks,
+    const std::vector<STrackPtr> &non_active_stracks,
+    const std::vector<STrackPtr> &remain_det_stracks) {
+  std::vector<int> unmatch_detection_idx;
+  std::vector<int> unmatch_unconfirmed_idx;
+  std::vector<std::vector<int>> matches_idx;
+
+  // Deal with unconfirmed tracks, usually tracks with only one beginning
+  // frame
+  const auto dists = calcIouDistance(non_active_stracks, remain_det_stracks);
+  linearAssignment(dists, non_active_stracks.size(), remain_det_stracks.size(),
+                   0.7, matches_idx, unmatch_unconfirmed_idx,
+                   unmatch_detection_idx);
+
+  for (const auto &match_idx : matches_idx) {
+    non_active_stracks[match_idx[0]]->update(*remain_det_stracks[match_idx[1]],
+                                             frame_id_);
+    current_tracked_stracks.push_back(non_active_stracks[match_idx[0]]);
+  }
+
+  std::vector<STrackPtr> current_removed_stracks;
+  for (const auto &unmatch_idx : unmatch_unconfirmed_idx) {
+    const auto track = non_active_stracks[unmatch_idx];
+    track->markAsRemoved();
+    current_removed_stracks.push_back(track);
+  }
+
+  // Add new stracks
+  for (const auto &unmatch_idx : unmatch_detection_idx) {
+    const auto track = remain_det_stracks[unmatch_idx];
+    if (track->getScore() < high_thresh_) {
+      continue;
+    }
+    track_id_count_++;
+    track->activate(frame_id_, track_id_count_);
+    current_tracked_stracks.push_back(track);
+  }
+  return current_removed_stracks;
+}
+
+std::vector<BYTETracker::STrackPtr> BYTETracker::update(
     const std::vector<Object> &objects) {
   ////////////////// Step 1: Get detections //////////////////
   frame_id_++;
@@ -60,115 +178,18 @@ std::vector<byte_track::BYTETracker::STrackPtr> byte_track::BYTETracker::update(
   }
 
   ////////////////// Step 2: First association, with IoU //////////////////
-  std::vector<STrackPtr> current_tracked_stracks;
-  std::vector<STrackPtr> remain_tracked_stracks;
-  std::vector<STrackPtr> remain_det_stracks;
-  std::vector<STrackPtr> refind_stracks;
-
-  {
-    std::vector<std::vector<int>> matches_idx;
-    std::vector<int> unmatch_detection_idx, unmatch_track_idx;
-
-    const auto dists = calcIouDistance(strack_pool, det_stracks);
-    linearAssignment(dists, strack_pool.size(), det_stracks.size(),
-                     match_thresh_, matches_idx, unmatch_track_idx,
-                     unmatch_detection_idx);
-
-    for (const auto &match_idx : matches_idx) {
-      const auto track = strack_pool[match_idx[0]];
-      const auto det = det_stracks[match_idx[1]];
-      if (track->getSTrackState() == STrackState::Tracked) {
-        track->update(*det, frame_id_);
-        current_tracked_stracks.push_back(track);
-      } else {
-        track->reActivate(*det, frame_id_);
-        refind_stracks.push_back(track);
-      }
-    }
-
-    for (const auto &unmatch_idx : unmatch_detection_idx) {
-      remain_det_stracks.push_back(det_stracks[unmatch_idx]);
-    }
-
-    for (const auto &unmatch_idx : unmatch_track_idx) {
-      if (strack_pool[unmatch_idx]->getSTrackState() == STrackState::Tracked) {
-        remain_tracked_stracks.push_back(strack_pool[unmatch_idx]);
-      }
-    }
-  }
+  auto [current_tracked_stracks, remain_tracked_stracks, remain_det_stracks,
+        refind_stracks] = iou_association(strack_pool, det_stracks);
 
   ////////////////// Step 3: Second association, using low score dets
   /////////////////////
-  std::vector<STrackPtr> current_lost_stracks;
-
-  {
-    std::vector<std::vector<int>> matches_idx;
-    std::vector<int> unmatch_track_idx, unmatch_detection_idx;
-
-    const auto dists = calcIouDistance(remain_tracked_stracks, det_low_stracks);
-    linearAssignment(dists, remain_tracked_stracks.size(),
-                     det_low_stracks.size(), 0.5, matches_idx,
-                     unmatch_track_idx, unmatch_detection_idx);
-
-    for (const auto &match_idx : matches_idx) {
-      const auto track = remain_tracked_stracks[match_idx[0]];
-      const auto det = det_low_stracks[match_idx[1]];
-      if (track->getSTrackState() == STrackState::Tracked) {
-        track->update(*det, frame_id_);
-        current_tracked_stracks.push_back(track);
-      } else {
-        track->reActivate(*det, frame_id_);
-        refind_stracks.push_back(track);
-      }
-    }
-
-    for (const auto &unmatch_track : unmatch_track_idx) {
-      const auto track = remain_tracked_stracks[unmatch_track];
-      if (track->getSTrackState() != STrackState::Lost) {
-        track->markAsLost();
-        current_lost_stracks.push_back(track);
-      }
-    }
-  }
+  auto current_lost_stracks =
+      low_score_association(current_tracked_stracks, refind_stracks,
+                            det_low_stracks, remain_tracked_stracks);
 
   ////////////////// Step 4: Init new stracks //////////////////
-  std::vector<STrackPtr> current_removed_stracks;
-
-  {
-    std::vector<int> unmatch_detection_idx;
-    std::vector<int> unmatch_unconfirmed_idx;
-    std::vector<std::vector<int>> matches_idx;
-
-    // Deal with unconfirmed tracks, usually tracks with only one beginning
-    // frame
-    const auto dists = calcIouDistance(non_active_stracks, remain_det_stracks);
-    linearAssignment(dists, non_active_stracks.size(),
-                     remain_det_stracks.size(), 0.7, matches_idx,
-                     unmatch_unconfirmed_idx, unmatch_detection_idx);
-
-    for (const auto &match_idx : matches_idx) {
-      non_active_stracks[match_idx[0]]->update(
-          *remain_det_stracks[match_idx[1]], frame_id_);
-      current_tracked_stracks.push_back(non_active_stracks[match_idx[0]]);
-    }
-
-    for (const auto &unmatch_idx : unmatch_unconfirmed_idx) {
-      const auto track = non_active_stracks[unmatch_idx];
-      track->markAsRemoved();
-      current_removed_stracks.push_back(track);
-    }
-
-    // Add new stracks
-    for (const auto &unmatch_idx : unmatch_detection_idx) {
-      const auto track = remain_det_stracks[unmatch_idx];
-      if (track->getScore() < high_thresh_) {
-        continue;
-      }
-      track_id_count_++;
-      track->activate(frame_id_, track_id_count_);
-      current_tracked_stracks.push_back(track);
-    }
-  }
+  auto current_removed_stracks = init_new_stracks(
+      current_tracked_stracks, non_active_stracks, remain_det_stracks);
 
   ////////////////// Step 5: Update state //////////////////
   for (const auto &lost_strack : lost_stracks_) {
@@ -200,8 +221,8 @@ std::vector<byte_track::BYTETracker::STrackPtr> byte_track::BYTETracker::update(
 
   return output_stracks;
 }
-std::vector<byte_track::BYTETracker::STrackPtr>
-byte_track::BYTETracker::jointStracks(
+
+std::vector<BYTETracker::STrackPtr> BYTETracker::jointStracks(
     const std::vector<STrackPtr> &a_tlist,
     const std::vector<STrackPtr> &b_tlist) const {
   std::set<int> exists;
@@ -216,20 +237,19 @@ byte_track::BYTETracker::jointStracks(
   return res;
 }
 
-std::vector<byte_track::BYTETracker::STrackPtr>
-byte_track::BYTETracker::subStracks(
+std::vector<BYTETracker::STrackPtr> BYTETracker::subStracks(
     const std::vector<STrackPtr> &a_tlist,
     const std::vector<STrackPtr> &b_tlist) const {
   std::map<int, STrackPtr> stracks;
   for (auto &strack : a_tlist) stracks.emplace(strack->getTrackId(), strack);
   for (auto &strack : b_tlist) stracks.erase(strack->getTrackId());
 
-  std::vector<byte_track::BYTETracker::STrackPtr> res;
+  std::vector<BYTETracker::STrackPtr> res;
   for (auto &[_, strack] : stracks) res.push_back(strack);
   return res;
 }
 
-void byte_track::BYTETracker::removeDuplicateStracks(
+void BYTETracker::removeDuplicateStracks(
     const std::vector<STrackPtr> &a_stracks,
     const std::vector<STrackPtr> &b_stracks, std::vector<STrackPtr> &a_res,
     std::vector<STrackPtr> &b_res) const {
@@ -271,7 +291,7 @@ void byte_track::BYTETracker::removeDuplicateStracks(
   }
 }
 
-void byte_track::BYTETracker::linearAssignment(
+void BYTETracker::linearAssignment(
     const std::vector<std::vector<float>> &cost_matrix, int cost_matrix_size,
     int cost_matrix_size_size, float thresh,
     std::vector<std::vector<int>> &matches, std::vector<int> &a_unmatched,
@@ -307,7 +327,7 @@ void byte_track::BYTETracker::linearAssignment(
   }
 }
 
-std::vector<std::vector<float>> byte_track::BYTETracker::calcIous(
+std::vector<std::vector<float>> BYTETracker::calcIous(
     const std::vector<Rect<float>> &a_rect,
     const std::vector<Rect<float>> &b_rect) const {
   std::vector<std::vector<float>> ious;
@@ -328,10 +348,10 @@ std::vector<std::vector<float>> byte_track::BYTETracker::calcIous(
   return ious;
 }
 
-std::vector<std::vector<float>> byte_track::BYTETracker::calcIouDistance(
+std::vector<std::vector<float>> BYTETracker::calcIouDistance(
     const std::vector<STrackPtr> &a_tracks,
     const std::vector<STrackPtr> &b_tracks) const {
-  std::vector<byte_track::Rect<float>> a_rects, b_rects;
+  std::vector<Rect<float>> a_rects, b_rects;
   for (size_t i = 0; i < a_tracks.size(); i++) {
     a_rects.push_back(a_tracks[i]->getRect());
   }
@@ -354,10 +374,10 @@ std::vector<std::vector<float>> byte_track::BYTETracker::calcIouDistance(
   return cost_matrix;
 }
 
-double byte_track::BYTETracker::execLapjv(
-    const std::vector<std::vector<float>> &cost, std::vector<int> &rowsol,
-    std::vector<int> &colsol, bool extend_cost, float cost_limit,
-    bool return_cost) const {
+double BYTETracker::execLapjv(const std::vector<std::vector<float>> &cost,
+                              std::vector<int> &rowsol,
+                              std::vector<int> &colsol, bool extend_cost,
+                              float cost_limit, bool return_cost) const {
   std::vector<std::vector<float>> cost_c;
   cost_c.assign(cost.begin(), cost.end());
 
@@ -472,3 +492,4 @@ double byte_track::BYTETracker::execLapjv(
 
   return opt;
 }
+}  // namespace byte_track
