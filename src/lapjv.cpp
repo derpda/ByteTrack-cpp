@@ -136,7 +136,7 @@ int _carr_dense(const size_t n, double *cost[], const size_t n_free_rows,
 /** Find columns with minimum d[j] and put them on the SCAN list.
  */
 size_t _find_dense(const size_t n, size_t lo, const std::vector<double> &d,
-                   std::vector<int> &cols, int *y) {
+                   std::vector<int> &cols) {
   size_t hi = lo + 1;
   double mind = d[cols[lo]];
   for (size_t k = hi; k < n; k++) {
@@ -214,7 +214,7 @@ int find_path_dense(const size_t n, double *cost[], const int start_i, int *y,
     // No columns left on the SCAN list.
     if (lo == hi) {
       n_ready = lo;
-      hi = _find_dense(n, lo, d, cols, y);
+      hi = _find_dense(n, lo, d, cols);
       for (size_t k = lo; k < hi; k++) {
         const int j = cols[k];
         if (y[j] < 0) {
