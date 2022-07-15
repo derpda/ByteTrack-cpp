@@ -3,74 +3,37 @@
 #include <algorithm>
 
 namespace byte_track {
-template <typename T>
-Rect<T>::Rect(T x, T y, T width, T height) : tlwh({x, y, width, height}) {}
 
-template <typename T>
-Rect<T>::~Rect() {}
+Rect::Rect(float x, float y, float width, float height)
+    : tlwh({x, y, width, height}) {}
 
-template <typename T>
-T Rect<T>::x() const {
-  return tlwh[0];
-}
+Rect::~Rect() {}
 
-template <typename T>
-T Rect<T>::y() const {
-  return tlwh[1];
-}
+float Rect::x() const { return tlwh[0]; }
 
-template <typename T>
-T Rect<T>::width() const {
-  return tlwh[2];
-}
+float Rect::y() const { return tlwh[1]; }
 
-template <typename T>
-T Rect<T>::height() const {
-  return tlwh[3];
-}
+float Rect::width() const { return tlwh[2]; }
 
-template <typename T>
-T& Rect<T>::x() {
-  return tlwh[0];
-}
+float Rect::height() const { return tlwh[3]; }
 
-template <typename T>
-T& Rect<T>::y() {
-  return tlwh[1];
-}
+float& Rect::x() { return tlwh[0]; }
 
-template <typename T>
-T& Rect<T>::width() {
-  return tlwh[2];
-}
+float& Rect::y() { return tlwh[1]; }
 
-template <typename T>
-T& Rect<T>::height() {
-  return tlwh[3];
-}
+float& Rect::width() { return tlwh[2]; }
 
-template <typename T>
-T Rect<T>::left() const {
-  return tlwh[0];
-}
+float& Rect::height() { return tlwh[3]; }
 
-template <typename T>
-T Rect<T>::top() const {
-  return tlwh[1];
-}
+float Rect::left() const { return tlwh[0]; }
 
-template <typename T>
-T Rect<T>::right() const {
-  return tlwh[0] + tlwh[2];
-}
+float Rect::top() const { return tlwh[1]; }
 
-template <typename T>
-T Rect<T>::bottom() const {
-  return tlwh[1] + tlwh[3];
-}
+float Rect::right() const { return tlwh[0] + tlwh[2]; }
 
-template <typename T>
-Tlbr<T> Rect<T>::getTlbr() const {
+float Rect::bottom() const { return tlwh[1] + tlwh[3]; }
+
+Tlbr Rect::getTlbr() const {
   return {
       tlwh[0],
       tlwh[1],
@@ -79,8 +42,7 @@ Tlbr<T> Rect<T>::getTlbr() const {
   };
 }
 
-template <typename T>
-Xyah<T> Rect<T>::getXyah() const {
+Xyah Rect::getXyah() const {
   return {
       tlwh[0] + tlwh[2] / 2,
       tlwh[1] + tlwh[3] / 2,
@@ -89,8 +51,7 @@ Xyah<T> Rect<T>::getXyah() const {
   };
 }
 
-template <typename T>
-float Rect<T>::calcIoU(const Rect<T>& other) const {
+float Rect::calcIoU(const Rect& other) const {
   const float box_area = (other.tlwh[2] + 1) * (other.tlwh[3] + 1);
   const float iw = std::min(tlwh[0] + tlwh[2], other.tlwh[0] + other.tlwh[2]) -
                    std::max(tlwh[0], other.tlwh[0]) + 1;
@@ -109,24 +70,12 @@ float Rect<T>::calcIoU(const Rect<T>& other) const {
   return iou;
 }
 
-template <typename T>
-Rect<T> generate_rect_by_tlbr(const Tlbr<T>& tlbr) {
-  return Rect<T>(tlbr[0], tlbr[1], tlbr[2] - tlbr[0], tlbr[3] - tlbr[1]);
+Rect generate_rect_by_tlbr(const Tlbr& tlbr) {
+  return Rect(tlbr[0], tlbr[1], tlbr[2] - tlbr[0], tlbr[3] - tlbr[1]);
 }
 
-template <typename T>
-Rect<T> generate_rect_by_xyah(const Xyah<T>& xyah) {
+Rect generate_rect_by_xyah(const Xyah& xyah) {
   const auto width = xyah[2] * xyah[3];
-  return Rect<T>(xyah[0] - width / 2, xyah[1] - xyah[3] / 2, width, xyah[3]);
+  return Rect(xyah[0] - width / 2, xyah[1] - xyah[3] / 2, width, xyah[3]);
 }
-
-// explicit instantiation
-template class Rect<int>;
-template class Rect<float>;
-
-template Rect<int> generate_rect_by_tlbr<int>(const Tlbr<int>&);
-template Rect<float> generate_rect_by_tlbr<float>(const Tlbr<float>&);
-
-template Rect<int> generate_rect_by_xyah<int>(const Xyah<int>&);
-template Rect<float> generate_rect_by_xyah<float>(const Xyah<float>&);
 }  // namespace byte_track

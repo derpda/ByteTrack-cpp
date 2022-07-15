@@ -325,8 +325,7 @@ void BYTETracker::linearAssignment(
 }
 
 std::vector<std::vector<float>> BYTETracker::calcIous(
-    const std::vector<Rect<float>> &a_rect,
-    const std::vector<Rect<float>> &b_rect) const {
+    const std::vector<Rect> &a_rect, const std::vector<Rect> &b_rect) const {
   std::vector<std::vector<float>> ious;
   if (a_rect.size() * b_rect.size() == 0) {
     return ious;
@@ -348,7 +347,7 @@ std::vector<std::vector<float>> BYTETracker::calcIous(
 std::vector<std::vector<float>> BYTETracker::calcIouDistance(
     const std::vector<STrackPtr> &a_tracks,
     const std::vector<STrackPtr> &b_tracks) const {
-  std::vector<Rect<float>> a_rects, b_rects;
+  std::vector<Rect> a_rects, b_rects;
   for (size_t i = 0; i < a_tracks.size(); i++) {
     a_rects.push_back(a_tracks[i]->getRect());
   }

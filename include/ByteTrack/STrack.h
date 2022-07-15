@@ -21,10 +21,10 @@ enum class STrackState {
 
 class STrack {
  public:
-  STrack(const Rect<float>& rect, int label, float score);
+  STrack(const Rect& rect, int label, float score);
   ~STrack();
 
-  const Rect<float>& getRect() const;
+  const Rect& getRect() const;
   int getLabel() const;
   float getScore() const;
 
@@ -50,7 +50,7 @@ class STrack {
   KalmanFilter::StateMean mean_;
   KalmanFilter::StateCov covariance_;
 
-  Rect<float> rect_;
+  Rect rect_;
   int label_;
   float score_;
 

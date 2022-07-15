@@ -7,7 +7,7 @@
 namespace byte_track {
 class KalmanFilter {
  public:
-  using DetectBox = Xyah<float>;
+  using DetectBox = Xyah;
 
   using StateMean = Eigen::Matrix<float, 1, 8, Eigen::RowMajor>;
   using StateCov = Eigen::Matrix<float, 8, 8, Eigen::RowMajor>;

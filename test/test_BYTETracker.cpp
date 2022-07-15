@@ -17,7 +17,7 @@ const std::string D_RESULTS_FILE = "detection_results.json";
 const std::string T_RESULTS_FILE = "tracking_results.json";
 
 // key: track_id, value: rect of tracking object
-using BYTETrackerOut = std::map<size_t, byte_track::Rect<float>>;
+using BYTETrackerOut = std::map<size_t, byte_track::Rect>;
 
 template <typename T>
 T get_data(const boost::property_tree::ptree &pt, const std::string &key) {
@@ -72,11 +72,10 @@ std::map<size_t, BYTETrackerOut> get_outputs_ref(
 
     decltype(outputs_ref)::iterator itr = outputs_ref.find(frame_id);
     if (itr != outputs_ref.end()) {
-      itr->second.emplace(track_id,
-                          byte_track::Rect<float>(x, y, width, height));
+      itr->second.emplace(track_id, byte_track::Rect(x, y, width, height));
     } else {
       BYTETrackerOut v{
-          {track_id, byte_track::Rect<float>(x, y, width, height)},
+          {track_id, byte_track::Rect(x, y, width, height)},
       };
       outputs_ref.emplace_hint(outputs_ref.end(), frame_id, v);
     }

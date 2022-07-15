@@ -3,50 +3,44 @@
 #include "Eigen/Dense"
 
 namespace byte_track {
-template <typename T>
-using Tlwh = Eigen::Matrix<T, 1, 4, Eigen::RowMajor>;
+using Tlwh = Eigen::Matrix<float, 1, 4, Eigen::RowMajor>;
 
-template <typename T>
-using Tlbr = Eigen::Matrix<T, 1, 4, Eigen::RowMajor>;
+using Tlbr = Eigen::Matrix<float, 1, 4, Eigen::RowMajor>;
 
-template <typename T>
-using Xyah = Eigen::Matrix<T, 1, 4, Eigen::RowMajor>;
+using Xyah = Eigen::Matrix<float, 1, 4, Eigen::RowMajor>;
 
-template <typename T>
 class Rect {
  public:
-  Tlwh<T> tlwh;
+  Tlwh tlwh;
 
   Rect() = default;
-  Rect(T x, T y, T width, T height);
+  Rect(float x, float y, float width, float height);
 
   ~Rect();
 
-  T x() const;
-  T y() const;
-  T width() const;
-  T height() const;
+  float x() const;
+  float y() const;
+  float width() const;
+  float height() const;
 
-  T &x();
-  T &y();
-  T &width();
-  T &height();
+  float &x();
+  float &y();
+  float &width();
+  float &height();
 
-  T left() const;
-  T top() const;
-  T right() const;
-  T bottom() const;
+  float left() const;
+  float top() const;
+  float right() const;
+  float bottom() const;
 
-  Tlbr<T> getTlbr() const;
-  Xyah<T> getXyah() const;
+  Tlbr getTlbr() const;
+  Xyah getXyah() const;
 
-  float calcIoU(const Rect<T> &other) const;
+  float calcIoU(const Rect &other) const;
 };
 
-template <typename T>
-Rect<T> generate_rect_by_tlbr(const Tlbr<T> &tlbr);
+Rect generate_rect_by_tlbr(const Tlbr &tlbr);
 
-template <typename T>
-Rect<T> generate_rect_by_xyah(const Xyah<T> &xyah);
+Rect generate_rect_by_xyah(const Xyah &xyah);
 
 }  // namespace byte_track

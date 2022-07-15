@@ -3,7 +3,7 @@
 #include <cstddef>
 
 namespace byte_track {
-STrack::STrack(const Rect<float>& rect, int label, float score)
+STrack::STrack(const Rect& rect, int label, float score)
     : kalman_filter_(),
       mean_(),
       covariance_(),
@@ -19,7 +19,7 @@ STrack::STrack(const Rect<float>& rect, int label, float score)
 
 STrack::~STrack() {}
 
-const Rect<float>& STrack::getRect() const { return rect_; }
+const Rect& STrack::getRect() const { return rect_; }
 
 int STrack::getLabel() const { return label_; }
 
