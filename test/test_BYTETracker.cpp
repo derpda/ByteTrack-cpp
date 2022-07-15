@@ -49,7 +49,7 @@ std::map<size_t, std::vector<byte_track::STrackPtr>> get_inputs_ref(
       itr->second.emplace_back(std::make_shared<byte_track::STrack>(
           byte_track::Rect(x, y, width, height), 0, prob));
     } else {
-      auto v{std::make_shared<byte_track::STrack>(
+      std::vector<byte_track::STrackPtr> v{std::make_shared<byte_track::STrack>(
           byte_track::Rect(x, y, width, height), 0, prob)};
       inputs_ref.emplace_hint(inputs_ref.end(), frame_id, v);
     }
