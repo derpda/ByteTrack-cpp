@@ -1,27 +1,23 @@
 #pragma once
 
-#include "ByteTrack/Object.h"
 #include "ByteTrack/STrack.h"
 #include "ByteTrack/lapjv.h"
 
 #include <array>
 #include <cstddef>
 #include <limits>
-#include <map>
-#include <memory>
 #include <vector>
 
 namespace byte_track {
+
 class BYTETracker {
  public:
-  using STrackPtr = std::shared_ptr<STrack>;
-
   BYTETracker(int frame_rate = 30, int track_buffer = 30,
               float track_thresh = 0.5, float high_thresh = 0.6,
               float match_thresh = 0.8);
   ~BYTETracker();
 
-  std::vector<STrackPtr> update(const std::vector<Object> &objects);
+  std::vector<STrackPtr> update(const std::vector<STrackPtr> &objects);
 
  private:
   std::array<std::vector<STrackPtr>, 4> iou_association(

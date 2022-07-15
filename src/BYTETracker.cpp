@@ -1,11 +1,12 @@
 #include "ByteTrack/BYTETracker.h"
 
+#include "ByteTrack/STrack.h"
+
 #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <limits>
 #include <map>
-#include <memory>
 #include <set>
 #include <stdexcept>
 #include <utility>
@@ -24,7 +25,7 @@ BYTETracker::BYTETracker(int frame_rate, int track_buffer, float track_thresh,
 
 BYTETracker::~BYTETracker() {}
 
-std::array<std::vector<BYTETracker::STrackPtr>, 4> BYTETracker::iou_association(
+std::array<std::vector<STrackPtr>, 4> BYTETracker::iou_association(
     const std::vector<STrackPtr> &strack_pool,
     const std::vector<STrackPtr> &det_stracks) {
   std::vector<std::vector<int>> matches_idx;
@@ -63,7 +64,7 @@ std::array<std::vector<BYTETracker::STrackPtr>, 4> BYTETracker::iou_association(
           std::move(remain_det_stracks), std::move(refind_stracks)};
 }
 
-std::vector<BYTETracker::STrackPtr> BYTETracker::low_score_association(
+std::vector<STrackPtr> BYTETracker::low_score_association(
     std::vector<STrackPtr> &current_tracked_stracks,
     std::vector<STrackPtr> &refind_stracks,
     const std::vector<STrackPtr> det_low_stracks,
@@ -98,7 +99,7 @@ std::vector<BYTETracker::STrackPtr> BYTETracker::low_score_association(
   return current_lost_stracks;
 }
 
-std::vector<BYTETracker::STrackPtr> BYTETracker::init_new_stracks(
+std::vector<STrackPtr> BYTETracker::init_new_stracks(
     std::vector<STrackPtr> &current_tracked_stracks,
     const std::vector<STrackPtr> &non_active_stracks,
     const std::vector<STrackPtr> &remain_det_stracks) {
@@ -139,28 +140,25 @@ std::vector<BYTETracker::STrackPtr> BYTETracker::init_new_stracks(
   return current_removed_stracks;
 }
 
-std::vector<BYTETracker::STrackPtr> BYTETracker::update(
-    const std::vector<Object> &objects) {
+std::vector<STrackPtr> BYTETracker::update(
+    const std::vector<STrackPtr> &input_stracks) {
   ////////////////// Step 1: Get detections //////////////////
   frame_id_++;
 
-  // Create new STracks using the result of object detection
+  // Sort new STracks from detection by score
   std::vector<STrackPtr> det_stracks;
   std::vector<STrackPtr> det_low_stracks;
-
-  for (const auto &object : objects) {
-    const auto strack = std::make_shared<STrack>(object.rect, object.prob);
-    if (object.prob >= track_thresh_) {
+  for (const auto &strack : input_stracks) {
+    if (strack->getScore() >= track_thresh_) {
       det_stracks.push_back(strack);
     } else {
       det_low_stracks.push_back(strack);
     }
   }
 
-  // Create lists of existing STrack
+  // Sort existing STrack by activity
   std::vector<STrackPtr> active_stracks;
   std::vector<STrackPtr> non_active_stracks;
-  std::vector<STrackPtr> strack_pool;
 
   for (const auto &tracked_strack : tracked_stracks_) {
     if (!tracked_strack->isActivated()) {
@@ -170,12 +168,11 @@ std::vector<BYTETracker::STrackPtr> BYTETracker::update(
     }
   }
 
+  std::vector<STrackPtr> strack_pool;
   strack_pool = jointStracks(active_stracks, lost_stracks_);
 
   // Predict current pose by KF
-  for (auto &strack : strack_pool) {
-    strack->predict();
-  }
+  for (auto &strack : strack_pool) strack->predict();
 
   ////////////////// Step 2: First association, with IoU //////////////////
   auto [current_tracked_stracks, remain_tracked_stracks, remain_det_stracks,
@@ -222,7 +219,7 @@ std::vector<BYTETracker::STrackPtr> BYTETracker::update(
   return output_stracks;
 }
 
-std::vector<BYTETracker::STrackPtr> BYTETracker::jointStracks(
+std::vector<STrackPtr> BYTETracker::jointStracks(
     const std::vector<STrackPtr> &a_tlist,
     const std::vector<STrackPtr> &b_tlist) const {
   std::set<int> exists;
@@ -237,14 +234,14 @@ std::vector<BYTETracker::STrackPtr> BYTETracker::jointStracks(
   return res;
 }
 
-std::vector<BYTETracker::STrackPtr> BYTETracker::subStracks(
+std::vector<STrackPtr> BYTETracker::subStracks(
     const std::vector<STrackPtr> &a_tlist,
     const std::vector<STrackPtr> &b_tlist) const {
   std::map<int, STrackPtr> stracks;
   for (auto &strack : a_tlist) stracks.emplace(strack->getTrackId(), strack);
   for (auto &strack : b_tlist) stracks.erase(strack->getTrackId());
 
-  std::vector<BYTETracker::STrackPtr> res;
+  std::vector<STrackPtr> res;
   for (auto &[_, strack] : stracks) res.push_back(strack);
   return res;
 }

@@ -4,8 +4,14 @@
 #include "ByteTrack/Rect.h"
 
 #include <cstddef>
+#include <memory>
 
 namespace byte_track {
+
+class STrack;
+
+using STrackPtr = std::shared_ptr<STrack>;
+
 enum class STrackState {
   New = 0,
   Tracked = 1,
@@ -15,14 +21,15 @@ enum class STrackState {
 
 class STrack {
  public:
-  STrack(const Rect<float>& rect, float score);
+  STrack(const Rect<float>& rect, int label, float score);
   ~STrack();
 
   const Rect<float>& getRect() const;
-  const STrackState& getSTrackState() const;
-
-  bool isActivated() const;
+  int getLabel() const;
   float getScore() const;
+
+  const STrackState& getSTrackState() const;
+  bool isActivated() const;
   size_t getTrackId() const;
   size_t getFrameId() const;
   size_t getStartFrameId() const;
@@ -44,10 +51,11 @@ class STrack {
   KalmanFilter::StateCov covariance_;
 
   Rect<float> rect_;
-  STrackState state_;
-
-  bool is_activated_;
+  int label_;
   float score_;
+
+  STrackState state_;
+  bool is_activated_;
   size_t track_id_;
   size_t frame_id_;
   size_t start_frame_id_;
