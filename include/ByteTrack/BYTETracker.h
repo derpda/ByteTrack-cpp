@@ -6,10 +6,11 @@
 #include <array>
 #include <cstddef>
 #include <limits>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 namespace byte_track {
-
 class BYTETracker {
  public:
   BYTETracker(int frame_rate = 30, int track_buffer = 30,
@@ -48,11 +49,10 @@ class BYTETracker {
                               std::vector<STrackPtr> &a_res,
                               std::vector<STrackPtr> &b_res) const;
 
-  void linearAssignment(const std::vector<std::vector<float>> &cost_matrix,
-                        int cost_matrix_size, int cost_matrix_size_size,
-                        float thresh, std::vector<std::vector<int>> &matches,
-                        std::vector<int> &b_unmatched,
-                        std::vector<int> &a_unmatched) const;
+  std::tuple<std::vector<std::pair<STrackPtr, STrackPtr>>,
+             std::vector<STrackPtr>, std::vector<STrackPtr>>
+  linearAssignment(const std::vector<STrackPtr> &a_stracks,
+                   const std::vector<STrackPtr> &b_stracks, float thresh) const;
 
   std::vector<std::vector<float>> calcIouDistance(
       const std::vector<STrackPtr> &a_tracks,
