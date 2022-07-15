@@ -7,8 +7,6 @@ namespace byte_track {
 Rect::Rect(float x, float y, float width, float height)
     : tlwh({x, y, width, height}) {}
 
-Rect::~Rect() {}
-
 float Rect::x() const { return tlwh[0]; }
 
 float Rect::y() const { return tlwh[1]; }
