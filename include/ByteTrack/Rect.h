@@ -32,10 +32,10 @@ class Rect {
   T &width();
   T &height();
 
-  T tl_x() const;
-  T tl_y() const;
-  T br_x() const;
-  T br_y() const;
+  T left() const;
+  T top() const;
+  T right() const;
+  T bottom() const;
 
   Tlbr<T> getTlbr() const;
   Xyah<T> getXyah() const;

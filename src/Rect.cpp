@@ -50,22 +50,22 @@ T& Rect<T>::height() {
 }
 
 template <typename T>
-T Rect<T>::tl_x() const {
+T Rect<T>::left() const {
   return tlwh[0];
 }
 
 template <typename T>
-T Rect<T>::tl_y() const {
+T Rect<T>::top() const {
   return tlwh[1];
 }
 
 template <typename T>
-T Rect<T>::br_x() const {
+T Rect<T>::right() const {
   return tlwh[0] + tlwh[2];
 }
 
 template <typename T>
-T Rect<T>::br_y() const {
+T Rect<T>::bottom() const {
   return tlwh[1] + tlwh[3];
 }
 
