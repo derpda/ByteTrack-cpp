@@ -1,5 +1,5 @@
 #include "ByteTrack/BYTETracker.h"
-#include "ByteTrack/STrack.h"
+#include "ByteTrack/Track.h"
 
 #include "boost/foreach.hpp"
 #include "boost/optional.hpp"
@@ -31,9 +31,9 @@ T get_data(const boost::property_tree::ptree &pt, const std::string &key) {
   return ret;
 }
 
-std::map<size_t, std::vector<byte_track::STrackPtr>> get_inputs_ref(
+std::map<size_t, std::vector<byte_track::TrackPtr>> get_inputs_ref(
     const boost::property_tree::ptree &pt) {
-  std::map<size_t, std::vector<byte_track::STrackPtr>> inputs_ref;
+  std::map<size_t, std::vector<byte_track::TrackPtr>> inputs_ref;
   BOOST_FOREACH (const boost::property_tree::ptree::value_type &child,
                  pt.get_child("results")) {
     const boost::property_tree::ptree &result = child.second;
@@ -46,10 +46,10 @@ std::map<size_t, std::vector<byte_track::STrackPtr>> get_inputs_ref(
 
     decltype(inputs_ref)::iterator itr = inputs_ref.find(frame_id);
     if (itr != inputs_ref.end()) {
-      itr->second.emplace_back(std::make_shared<byte_track::STrack>(
+      itr->second.emplace_back(std::make_shared<byte_track::Track>(
           byte_track::Rect(x, y, width, height), 0, prob));
     } else {
-      std::vector<byte_track::STrackPtr> v{std::make_shared<byte_track::STrack>(
+      std::vector<byte_track::TrackPtr> v{std::make_shared<byte_track::Track>(
           byte_track::Rect(x, y, width, height), 0, prob)};
       inputs_ref.emplace_hint(inputs_ref.end(), frame_id, v);
     }

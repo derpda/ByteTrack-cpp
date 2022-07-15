@@ -8,27 +8,27 @@
 
 namespace byte_track {
 
-class STrack;
+class Track;
 
-using STrackPtr = std::shared_ptr<STrack>;
+using TrackPtr = std::shared_ptr<Track>;
 
-enum class STrackState {
+enum class TrackState {
   New = 0,
   Tracked = 1,
   Lost = 2,
   Removed = 3,
 };
 
-class STrack {
+class Track {
  public:
-  STrack(const Rect& rect, int label, float score);
-  ~STrack();
+  Track(const Rect& rect, int label, float score);
+  ~Track();
 
   const Rect& getRect() const;
   int getLabel() const;
   float getScore() const;
 
-  const STrackState& getSTrackState() const;
+  const TrackState& getTrackState() const;
   bool isActivated() const;
   size_t getTrackId() const;
   size_t getFrameId() const;
@@ -36,11 +36,11 @@ class STrack {
   size_t getTrackletLength() const;
 
   void activate(size_t frame_id, size_t track_id);
-  void reActivate(const STrack& new_track, size_t frame_id,
+  void reActivate(const Track& new_track, size_t frame_id,
                   int new_track_id = -1);
 
   void predict();
-  void update(const STrack& new_track, size_t frame_id);
+  void update(const Track& new_track, size_t frame_id);
 
   void markAsLost();
   void markAsRemoved();
@@ -54,7 +54,7 @@ class STrack {
   int label_;
   float score_;
 
-  STrackState state_;
+  TrackState state_;
   bool is_activated_;
   size_t track_id_;
   size_t frame_id_;
