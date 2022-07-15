@@ -5,7 +5,6 @@
 namespace byte_track {
 Track::Track(const Rect& rect, int label, float score)
     : kalman_filter_(),
-      mean_(),
       rect_(rect),
       label_(label),
       score_(score),
@@ -37,9 +36,7 @@ size_t Track::getStartFrameId() const { return start_frame_id_; }
 size_t Track::getTrackletLength() const { return tracklet_len_; }
 
 void Track::activate(size_t frame_id, size_t track_id) {
-  kalman_filter_.initiate(mean_, rect_.getXyah());
-
-  updateRect();
+  kalman_filter_.initiate(rect_.getXyah());
 
   state_ = TrackState::Tracked;
   if (frame_id == 1) {
@@ -53,9 +50,8 @@ void Track::activate(size_t frame_id, size_t track_id) {
 
 void Track::reActivate(const Track& new_track, size_t frame_id,
                        int new_track_id) {
-  kalman_filter_.update(mean_, new_track.getRect().getXyah());
-
-  updateRect();
+  rect_ = generate_rect_by_xyah(
+      kalman_filter_.update(new_track.getRect().getXyah()));
 
   state_ = TrackState::Tracked;
   is_activated_ = true;
@@ -67,17 +63,11 @@ void Track::reActivate(const Track& new_track, size_t frame_id,
   tracklet_len_ = 0;
 }
 
-void Track::predict() {
-  if (state_ != TrackState::Tracked) {
-    mean_[7] = 0;
-  }
-  kalman_filter_.predict(mean_);
-}
+void Track::predict() { kalman_filter_.predict(state_ != TrackState::Tracked); }
 
 void Track::update(const Track& new_track, size_t frame_id) {
-  kalman_filter_.update(mean_, new_track.getRect().getXyah());
-
-  updateRect();
+  rect_ = generate_rect_by_xyah(
+      kalman_filter_.update(new_track.getRect().getXyah()));
 
   state_ = TrackState::Tracked;
   is_activated_ = true;
@@ -90,10 +80,4 @@ void Track::markAsLost() { state_ = TrackState::Lost; }
 
 void Track::markAsRemoved() { state_ = TrackState::Removed; }
 
-void Track::updateRect() {
-  rect_.width() = mean_[2] * mean_[3];
-  rect_.height() = mean_[3];
-  rect_.x() = mean_[0] - rect_.width() / 2;
-  rect_.y() = mean_[1] - rect_.height() / 2;
-}
 }  // namespace byte_track

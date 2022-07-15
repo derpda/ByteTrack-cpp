@@ -18,11 +18,11 @@ class KalmanFilter {
   KalmanFilter(float std_weight_position = 1. / 20,
                float std_weight_velocity = 1. / 160);
 
-  void initiate(StateMean& mean, const DetectBox& measurement);
+  void initiate(const DetectBox& measurement);
 
-  void predict(StateMean& mean);
+  void predict(bool mean_eight_to_zero);
 
-  void update(StateMean& mean, const DetectBox& measurement);
+  Xyah update(const DetectBox& measurement);
 
  private:
   float std_weight_position_;
@@ -31,9 +31,9 @@ class KalmanFilter {
   Eigen::Matrix<float, 8, 8, Eigen::RowMajor> motion_mat_;
   Eigen::Matrix<float, 4, 8, Eigen::RowMajor> update_mat_;
 
+  StateMean mean_;
   StateCov covariance_;
 
-  void project(StateHMean& projected_mean, StateHCov& projected_covariance,
-               const StateMean& mean);
+  void project(StateHMean& projected_mean, StateHCov& projected_covariance);
 };
 }  // namespace byte_track

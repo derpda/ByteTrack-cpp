@@ -47,7 +47,6 @@ class Track {
 
  private:
   KalmanFilter kalman_filter_;
-  KalmanFilter::StateMean mean_;
 
   Rect rect_;
   int label_;
@@ -59,7 +58,5 @@ class Track {
   size_t frame_id_;
   size_t start_frame_id_;
   size_t tracklet_len_;
-
-  void updateRect();
 };
 }  // namespace byte_track
