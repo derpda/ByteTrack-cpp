@@ -4,6 +4,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <set>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -203,18 +204,14 @@ std::vector<byte_track::BYTETracker::STrackPtr>
 byte_track::BYTETracker::jointStracks(
     const std::vector<STrackPtr> &a_tlist,
     const std::vector<STrackPtr> &b_tlist) const {
-  std::map<int, int> exists;
+  std::set<int> exists;
   std::vector<STrackPtr> res;
-  for (size_t i = 0; i < a_tlist.size(); i++) {
-    exists.emplace(a_tlist[i]->getTrackId(), 1);
-    res.push_back(a_tlist[i]);
+  for (auto &strack : a_tlist) {
+    exists.emplace(strack->getTrackId());
+    res.push_back(strack);
   }
-  for (size_t i = 0; i < b_tlist.size(); i++) {
-    const int &tid = b_tlist[i]->getTrackId();
-    if (!exists[tid] || exists.count(tid) == 0) {
-      exists[tid] = 1;
-      res.push_back(b_tlist[i]);
-    }
+  for (auto &strack : b_tlist) {
+    if (exists.count(strack->getTrackId()) == 0) res.push_back(strack);
   }
   return res;
 }
@@ -224,22 +221,11 @@ byte_track::BYTETracker::subStracks(
     const std::vector<STrackPtr> &a_tlist,
     const std::vector<STrackPtr> &b_tlist) const {
   std::map<int, STrackPtr> stracks;
-  for (size_t i = 0; i < a_tlist.size(); i++) {
-    stracks.emplace(a_tlist[i]->getTrackId(), a_tlist[i]);
-  }
+  for (auto &strack : a_tlist) stracks.emplace(strack->getTrackId(), strack);
+  for (auto &strack : b_tlist) stracks.erase(strack->getTrackId());
 
-  for (size_t i = 0; i < b_tlist.size(); i++) {
-    const int &tid = b_tlist[i]->getTrackId();
-    if (stracks.count(tid) != 0) {
-      stracks.erase(tid);
-    }
-  }
-
-  std::vector<STrackPtr> res;
-  for (const auto &strack : stracks) {
-    res.push_back(strack.second);
-  }
-
+  std::vector<byte_track::BYTETracker::STrackPtr> res;
+  for (auto &[_, strack] : stracks) res.push_back(strack);
   return res;
 }
 
