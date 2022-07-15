@@ -270,39 +270,22 @@ std::vector<TrackPtr> BYTETracker::subTracks(
   return res;
 }
 
-std::vector<std::vector<float>> BYTETracker::calcIous(
-    const std::vector<Rect> &a_rect, const std::vector<Rect> &b_rect) const {
-  std::vector<std::vector<float>> ious;
-  if (a_rect.size() * b_rect.size() == 0) {
-    return ious;
-  }
-
-  ious.resize(a_rect.size());
-  for (size_t i = 0; i < ious.size(); i++) {
-    ious[i].resize(b_rect.size());
-  }
-
-  for (size_t bi = 0; bi < b_rect.size(); bi++) {
-    for (size_t ai = 0; ai < a_rect.size(); ai++) {
-      ious[ai][bi] = b_rect[bi].calcIoU(a_rect[ai]);
-    }
-  }
-  return ious;
-}
-
 std::vector<std::vector<float>> BYTETracker::calcIouDistance(
     const std::vector<TrackPtr> &a_tracks,
     const std::vector<TrackPtr> &b_tracks) const {
-  std::vector<Rect> a_rects, b_rects;
-  for (size_t i = 0; i < a_tracks.size(); i++) {
-    a_rects.push_back(a_tracks[i]->getRect());
+  if (a_tracks.empty() || b_tracks.empty()) return {};
+
+  std::vector<std::vector<float>> ious;
+  ious.resize(a_tracks.size());
+  for (size_t i = 0; i < ious.size(); i++) {
+    ious[i].resize(b_tracks.size());
   }
 
-  for (size_t i = 0; i < b_tracks.size(); i++) {
-    b_rects.push_back(b_tracks[i]->getRect());
+  for (size_t bi = 0; bi < b_tracks.size(); bi++) {
+    for (size_t ai = 0; ai < a_tracks.size(); ai++) {
+      ious[ai][bi] = b_tracks[bi]->getRect().calcIoU(a_tracks[ai]->getRect());
+    }
   }
-
-  const auto ious = calcIous(a_rects, b_rects);
 
   std::vector<std::vector<float>> cost_matrix;
   for (size_t i = 0; i < ious.size(); i++) {
@@ -320,43 +303,34 @@ std::tuple<std::vector<TrackPtr>, std::vector<TrackPtr>>
 BYTETracker::removeDuplicateTracks(
     const std::vector<TrackPtr> &a_tracks,
     const std::vector<TrackPtr> &b_tracks) const {
-  std::vector<TrackPtr> a_tracks_out;
-  std::vector<TrackPtr> b_tracks_out;
   const auto ious = calcIouDistance(a_tracks, b_tracks);
 
-  std::vector<std::pair<size_t, size_t>> overlapping_combinations;
-  for (size_t i = 0; i < ious.size(); i++) {
-    for (size_t j = 0; j < ious[i].size(); j++) {
-      if (ious[i][j] < 0.15) {
-        overlapping_combinations.emplace_back(i, j);
+  std::vector<bool> a_overlapping(a_tracks.size(), false),
+      b_overlapping(b_tracks.size(), false);
+  for (size_t ai = 0; ai < ious.size(); ai++) {
+    for (size_t bi = 0; bi < ious[ai].size(); bi++) {
+      if (ious[ai][bi] < 0.15) {
+        const int timep =
+            a_tracks[ai]->getFrameId() - a_tracks[ai]->getStartFrameId();
+        const int timeq =
+            b_tracks[bi]->getFrameId() - b_tracks[bi]->getStartFrameId();
+        if (timep > timeq) {
+          b_overlapping[bi] = true;
+        } else {
+          a_overlapping[ai] = true;
+        }
       }
     }
   }
 
-  std::vector<bool> a_overlapping(a_tracks.size(), false),
-      b_overlapping(b_tracks.size(), false);
-  for (const auto &[a_idx, b_idx] : overlapping_combinations) {
-    const int timep =
-        a_tracks[a_idx]->getFrameId() - a_tracks[a_idx]->getStartFrameId();
-    const int timeq =
-        b_tracks[b_idx]->getFrameId() - b_tracks[b_idx]->getStartFrameId();
-    if (timep > timeq) {
-      b_overlapping[b_idx] = true;
-    } else {
-      a_overlapping[a_idx] = true;
-    }
-  }
-
+  std::vector<TrackPtr> a_tracks_out;
   for (size_t ai = 0; ai < a_tracks.size(); ai++) {
-    if (!a_overlapping[ai]) {
-      a_tracks_out.push_back(a_tracks[ai]);
-    }
+    if (!a_overlapping[ai]) a_tracks_out.push_back(a_tracks[ai]);
   }
 
+  std::vector<TrackPtr> b_tracks_out;
   for (size_t bi = 0; bi < b_tracks.size(); bi++) {
-    if (!b_overlapping[bi]) {
-      b_tracks_out.push_back(b_tracks[bi]);
-    }
+    if (!b_overlapping[bi]) b_tracks_out.push_back(b_tracks[bi]);
   }
   return {std::move(a_tracks_out), std::move(b_tracks_out)};
 }

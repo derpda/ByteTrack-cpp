@@ -46,9 +46,6 @@ class BYTETracker {
       const std::vector<TrackPtr> &a_tracks,
       const std::vector<TrackPtr> &b_tracks) const;
 
-  std::vector<std::vector<float>> calcIous(
-      const std::vector<Rect> &a_rect, const std::vector<Rect> &b_rect) const;
-
   std::tuple<std::vector<TrackPtr>, std::vector<TrackPtr>>
   removeDuplicateTracks(const std::vector<TrackPtr> &a_tracks,
                         const std::vector<TrackPtr> &b_tracks) const;
