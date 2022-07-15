@@ -48,7 +48,6 @@ class Track {
  private:
   KalmanFilter kalman_filter_;
   KalmanFilter::StateMean mean_;
-  KalmanFilter::StateCov covariance_;
 
   Rect rect_;
   int label_;

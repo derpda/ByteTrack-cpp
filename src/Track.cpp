@@ -6,7 +6,6 @@ namespace byte_track {
 Track::Track(const Rect& rect, int label, float score)
     : kalman_filter_(),
       mean_(),
-      covariance_(),
       rect_(rect),
       label_(label),
       score_(score),
@@ -38,7 +37,7 @@ size_t Track::getStartFrameId() const { return start_frame_id_; }
 size_t Track::getTrackletLength() const { return tracklet_len_; }
 
 void Track::activate(size_t frame_id, size_t track_id) {
-  kalman_filter_.initiate(mean_, covariance_, rect_.getXyah());
+  kalman_filter_.initiate(mean_, rect_.getXyah());
 
   updateRect();
 
@@ -54,7 +53,7 @@ void Track::activate(size_t frame_id, size_t track_id) {
 
 void Track::reActivate(const Track& new_track, size_t frame_id,
                        int new_track_id) {
-  kalman_filter_.update(mean_, covariance_, new_track.getRect().getXyah());
+  kalman_filter_.update(mean_, new_track.getRect().getXyah());
 
   updateRect();
 
@@ -72,11 +71,11 @@ void Track::predict() {
   if (state_ != TrackState::Tracked) {
     mean_[7] = 0;
   }
-  kalman_filter_.predict(mean_, covariance_);
+  kalman_filter_.predict(mean_);
 }
 
 void Track::update(const Track& new_track, size_t frame_id) {
-  kalman_filter_.update(mean_, covariance_, new_track.getRect().getXyah());
+  kalman_filter_.update(mean_, new_track.getRect().getXyah());
 
   updateRect();
 
