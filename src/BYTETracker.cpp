@@ -303,11 +303,7 @@ std::tuple<std::vector<int>, std::vector<int>, double> BYTETracker::execLapjv(
     cost_c.resize(n * n);
 
     if (cost_limit < std::numeric_limits<float>::max()) {
-      for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-          cost_c[i * n + j] = cost_limit / 2.0;
-        }
-      }
+      cost_c.assign(cost_c.size(), cost_limit / 2.0);
     } else {
       float cost_max = -1;
       for (size_t i = 0; i < cost.size(); i++) {
@@ -315,11 +311,7 @@ std::tuple<std::vector<int>, std::vector<int>, double> BYTETracker::execLapjv(
           if (cost[i][j] > cost_max) cost_max = cost[i][j];
         }
       }
-      for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-          cost_c[i * n + j] = cost_max + 1;
-        }
-      }
+      cost_c.assign(cost_c.size(), cost_max + 1);
     }
 
     for (int i = n_rows; i < n; i++) {
