@@ -111,9 +111,9 @@ std::vector<TrackPtr> BYTETracker::initNewTracks(
   // Add new tracks
   for (const auto &detection : new_detections) {
     if (detection->getScore() < high_thresh_) continue;
-    TrackPtr new_track = std::make_shared<Track>(detection);
     track_id_count_++;
-    new_track->activate(frame_id_, track_id_count_);
+    TrackPtr new_track =
+        std::make_shared<Track>(detection, frame_id_, track_id_count_);
     matched_tracks.push_back(new_track);
   }
   return new_removed_tracks;

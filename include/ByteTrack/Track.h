@@ -14,15 +14,14 @@ class Track;
 using TrackPtr = std::shared_ptr<Track>;
 
 enum class TrackState {
-  New = 0,
-  Tracked = 1,
-  Lost = 2,
-  Removed = 3,
+  Tracked = 0,
+  Lost = 1,
+  Removed = 2,
 };
 
 class Track {
  public:
-  Track(DetectionPtr detection);
+  Track(DetectionPtr detection, size_t start_frame_id, size_t track_id);
   ~Track();
 
   const Detection& getDetection() const;
@@ -34,7 +33,6 @@ class Track {
   size_t getStartFrameId() const;
   size_t getTrackletLength() const;
 
-  void activate(size_t frame_id, size_t track_id);
   void reActivate(const DetectionPtr& new_track, size_t frame_id,
                   int new_track_id = -1);
 
