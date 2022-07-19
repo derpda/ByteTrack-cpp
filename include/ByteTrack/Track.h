@@ -21,6 +21,7 @@ enum class TrackState {
 
 class Track {
  public:
+  Track() = delete;
   Track(DetectionPtr detection, size_t start_frame_id, size_t track_id);
 
   const Detection& getDetection() const;
