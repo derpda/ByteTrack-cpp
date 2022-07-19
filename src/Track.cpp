@@ -21,8 +21,6 @@ Track::Track(DetectionPtr detection, size_t start_frame_id, size_t track_id)
   kalman_filter_.initiate(detection->getRect().getXyah());
 }
 
-Track::~Track() {}
-
 const Detection& Track::getDetection() const { return *detection_.get(); }
 
 const TrackState& Track::getTrackState() const { return state_; }

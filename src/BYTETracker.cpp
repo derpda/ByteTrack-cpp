@@ -26,8 +26,6 @@ BYTETracker::BYTETracker(int frame_rate, int track_buffer, float track_thresh,
       frame_id_(0),
       track_id_count_(0) {}
 
-BYTETracker::~BYTETracker() {}
-
 std::tuple<std::vector<TrackPtr>, std::vector<TrackPtr>,
            std::vector<DetectionPtr>>
 BYTETracker::iouAssociation(const std::vector<TrackPtr> &track_pool,

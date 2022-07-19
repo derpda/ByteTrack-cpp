@@ -17,7 +17,6 @@ class BYTETracker {
   BYTETracker(int frame_rate = 30, int track_buffer = 30,
               float track_thresh = 0.5, float high_thresh = 0.6,
               float match_thresh = 0.8);
-  ~BYTETracker();
 
   std::vector<TrackPtr> update(const std::vector<DetectionPtr> &objects);
 

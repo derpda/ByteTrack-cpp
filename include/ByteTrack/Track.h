@@ -22,7 +22,6 @@ enum class TrackState {
 class Track {
  public:
   Track(DetectionPtr detection, size_t start_frame_id, size_t track_id);
-  ~Track();
 
   const Detection& getDetection() const;
 
