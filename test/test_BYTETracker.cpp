@@ -1,5 +1,6 @@
 #include "ByteTrack/BYTETracker.h"
 #include "ByteTrack/Detection.h"
+#include "ByteTrack/Rect.h"
 #include "ByteTrack/Track.h"
 
 #include "boost/foreach.hpp"
@@ -12,13 +13,43 @@
 #include <memory>
 
 namespace {
+
+class RectImpl : public byte_track::Rect {
+  float x_;
+  float y_;
+  float width_;
+  float height_;
+
+ public:
+  RectImpl(float x = 0, float y = 0, float width = 0, float height = 0)
+      : x_(x), y_(y), width_(width), height_(height) {}
+
+  const float &left() const override { return x_; }
+  const float &top() const override { return y_; }
+  const float &width() const override { return width_; }
+  const float &height() const override { return height_; }
+};
+
+class DetectionImpl : public byte_track::Detection {
+  RectImpl rect_;
+  float score_ = 0;
+
+ public:
+  DetectionImpl(const RectImpl &rect, float score)
+      : rect_(rect), score_(score) {}
+
+  const RectImpl &getRect() const override { return rect_; }
+
+  const float &getScore() const override { return score_; }
+};
+
 constexpr double EPS = 1e-2;
 
 const std::string D_RESULTS_FILE = "detection_results.json";
 const std::string T_RESULTS_FILE = "tracking_results.json";
 
 // key: track_id, value: rect of tracking object
-using BYTETrackerOut = std::map<size_t, byte_track::Rect>;
+using BYTETrackerOut = std::map<size_t, RectImpl>;
 
 template <typename T>
 T get_data(const boost::property_tree::ptree &pt, const std::string &key) {
@@ -47,12 +78,11 @@ std::map<size_t, std::vector<byte_track::DetectionPtr>> get_inputs_ref(
 
     decltype(inputs_ref)::iterator itr = inputs_ref.find(frame_id);
     if (itr != inputs_ref.end()) {
-      itr->second.emplace_back(std::make_shared<byte_track::Detection>(
-          byte_track::Rect(x, y, width, height), prob));
+      itr->second.emplace_back(
+          std::make_shared<DetectionImpl>(RectImpl(x, y, width, height), prob));
     } else {
       std::vector<byte_track::DetectionPtr> v{
-          std::make_shared<byte_track::Detection>(
-              byte_track::Rect(x, y, width, height), prob)};
+          std::make_shared<DetectionImpl>(RectImpl(x, y, width, height), prob)};
       inputs_ref.emplace_hint(inputs_ref.end(), frame_id, v);
     }
   }
@@ -74,10 +104,10 @@ std::map<size_t, BYTETrackerOut> get_outputs_ref(
 
     decltype(outputs_ref)::iterator itr = outputs_ref.find(frame_id);
     if (itr != outputs_ref.end()) {
-      itr->second.emplace(track_id, byte_track::Rect(x, y, width, height));
+      itr->second.emplace(track_id, RectImpl(x, y, width, height));
     } else {
       BYTETrackerOut v{
-          {track_id, byte_track::Rect(x, y, width, height)},
+          {track_id, RectImpl(x, y, width, height)},
       };
       outputs_ref.emplace_hint(outputs_ref.end(), frame_id, v);
     }
@@ -127,8 +157,8 @@ TEST(ByteTrack, BYTETracker) {
         const auto &rect = outputs_per_frame->getDetection().getRect();
         const auto &track_id = outputs_per_frame->getTrackId();
         const auto &ref = outputs_ref[frame_id][track_id];
-        EXPECT_NEAR(ref.x(), rect.x(), EPS);
-        EXPECT_NEAR(ref.y(), rect.y(), EPS);
+        EXPECT_NEAR(ref.top(), rect.top(), EPS);
+        EXPECT_NEAR(ref.left(), rect.left(), EPS);
         EXPECT_NEAR(ref.width(), rect.width(), EPS);
         EXPECT_NEAR(ref.height(), rect.height(), EPS);
       }

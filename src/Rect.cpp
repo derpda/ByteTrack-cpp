@@ -4,75 +4,53 @@
 
 namespace byte_track {
 
-Rect::Rect(float x, float y, float width, float height)
-    : tlwh({x, y, width, height}) {}
+float& Rect::top() {
+  return const_cast<float&>(const_cast<const Rect*>(this)->top());
+}
 
-float Rect::x() const { return tlwh[0]; }
+float& Rect::left() {
+  return const_cast<float&>(const_cast<const Rect*>(this)->left());
+}
 
-float Rect::y() const { return tlwh[1]; }
+float& Rect::width() {
+  return const_cast<float&>(const_cast<const Rect*>(this)->width());
+}
 
-float Rect::width() const { return tlwh[2]; }
-
-float Rect::height() const { return tlwh[3]; }
-
-float& Rect::x() { return tlwh[0]; }
-
-float& Rect::y() { return tlwh[1]; }
-
-float& Rect::width() { return tlwh[2]; }
-
-float& Rect::height() { return tlwh[3]; }
-
-float Rect::left() const { return tlwh[0]; }
-
-float Rect::top() const { return tlwh[1]; }
-
-float Rect::right() const { return tlwh[0] + tlwh[2]; }
-
-float Rect::bottom() const { return tlwh[1] + tlwh[3]; }
-
-Tlbr Rect::getTlbr() const {
-  return {
-      tlwh[0],
-      tlwh[1],
-      tlwh[0] + tlwh[2],
-      tlwh[1] + tlwh[3],
-  };
+float& Rect::height() {
+  return const_cast<float&>(const_cast<const Rect*>(this)->height());
 }
 
 Xyah Rect::getXyah() const {
   return {
-      tlwh[0] + tlwh[2] / 2,
-      tlwh[1] + tlwh[3] / 2,
-      tlwh[2] / tlwh[3],
-      tlwh[3],
+      left() + width() / 2,
+      top() + height() / 2,
+      width() / height(),
+      height(),
   };
 }
 
+void Rect::set_from_xyah(const Xyah& xyah) {
+  float xyah_width = xyah(2) * xyah(3);
+  left() = xyah(0) - xyah_width / 2;
+  top() = xyah(1) - xyah(3) / 2;
+  width() = xyah_width;
+  height() = xyah(3);
+}
+
 float calcIoU(const Rect& A, const Rect& B) {
-  const float box_area = (B.tlwh[2] + 1) * (B.tlwh[3] + 1);
-  const float iw = std::min(A.tlwh[0] + A.tlwh[2], B.tlwh[0] + B.tlwh[2]) -
-                   std::max(A.tlwh[0], B.tlwh[0]) + 1;
+  const float box_area = (B.width() + 1) * (B.height() + 1);
+  const float iw = std::min(A.left() + A.width(), B.left() + B.width()) -
+                   std::max(A.left(), B.left()) + 1;
   float iou = 0;
   if (iw > 0) {
-    const float ih = std::min(A.tlwh[1] + A.tlwh[3], B.tlwh[1] + B.tlwh[3]) -
-                     std::max(A.tlwh[1], B.tlwh[1]) + 1;
+    const float ih = std::min(A.top() + A.height(), B.top() + B.height()) -
+                     std::max(A.top(), B.top()) + 1;
     if (ih > 0) {
-      const float ua = (A.tlwh[0] + A.tlwh[2] - A.tlwh[0] + 1) *
-                           (A.tlwh[1] + A.tlwh[3] - A.tlwh[1] + 1) +
-                       box_area - iw * ih;
+      const float ua = (A.width() + 1) * (A.height() + 1) + box_area - iw * ih;
       iou = iw * ih / ua;
     }
   }
   return iou;
 }
 
-Rect generate_rect_by_tlbr(const Tlbr& tlbr) {
-  return Rect(tlbr[0], tlbr[1], tlbr[2] - tlbr[0], tlbr[3] - tlbr[1]);
-}
-
-Rect generate_rect_by_xyah(const Xyah& xyah) {
-  const auto width = xyah[2] * xyah[3];
-  return Rect(xyah[0] - width / 2, xyah[1] - xyah[3] / 2, width, xyah[3]);
-}
 }  // namespace byte_track

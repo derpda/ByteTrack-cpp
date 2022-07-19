@@ -2,43 +2,32 @@
 
 #include "Eigen/Dense"
 
+#include <memory>
+
 namespace byte_track {
-using Tlwh = Eigen::Matrix<float, 1, 4, Eigen::RowMajor>;
-
-using Tlbr = Eigen::Matrix<float, 1, 4, Eigen::RowMajor>;
-
 using Xyah = Eigen::Matrix<float, 1, 4, Eigen::RowMajor>;
+
+class Rect;
+using RectPtr = std::shared_ptr<Rect>;
 
 class Rect {
  public:
-  Tlwh tlwh;
+  virtual ~Rect() = default;
 
-  Rect() = default;
-  Rect(float x, float y, float width, float height);
+  virtual const float& top() const = 0;
+  virtual const float& left() const = 0;
+  virtual const float& width() const = 0;
+  virtual const float& height() const = 0;
 
-  float x() const;
-  float y() const;
-  float width() const;
-  float height() const;
+  virtual float& top();
+  virtual float& left();
+  virtual float& width();
+  virtual float& height();
 
-  float &x();
-  float &y();
-  float &width();
-  float &height();
-
-  float left() const;
-  float top() const;
-  float right() const;
-  float bottom() const;
-
-  Tlbr getTlbr() const;
   Xyah getXyah() const;
+
+  void set_from_xyah(const Xyah& xyah);
 };
 
-float calcIoU(const Rect &A, const Rect &B);
-
-Rect generate_rect_by_tlbr(const Tlbr &tlbr);
-
-Rect generate_rect_by_xyah(const Xyah &xyah);
-
+float calcIoU(const Rect& A, const Rect& B);
 }  // namespace byte_track

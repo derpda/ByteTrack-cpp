@@ -10,16 +10,12 @@ using DetectionPtr = std::shared_ptr<Detection>;
 
 class Detection {
  public:
-  Detection(const Rect& rect, float score);
+  virtual ~Detection() = default;
 
-  const Rect& getRect() const;
-  float getScore() const;
+  virtual const Rect& getRect() const = 0;
+  virtual const float& getScore() const = 0;
 
-  void setRect(const Rect& rect);
-  void setScore(float score);
-
- private:
-  Rect rect_;
-  float score_;
+  virtual Rect& getRect();
+  virtual float& getScore();
 };
 }  // namespace byte_track

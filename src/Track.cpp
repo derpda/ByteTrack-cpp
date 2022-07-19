@@ -38,9 +38,9 @@ size_t Track::getTrackletLength() const { return tracklet_len_; }
 void Track::predict() { kalman_filter_.predict(state_ != TrackState::Tracked); }
 
 void Track::update(const DetectionPtr& matched_detection, size_t frame_id) {
-  detection_->setRect(generate_rect_by_xyah(
-      kalman_filter_.update(matched_detection->getRect().getXyah())));
-  detection_->setScore(matched_detection->getScore());
+  detection_->getRect().set_from_xyah(
+      kalman_filter_.update(matched_detection->getRect().getXyah()));
+  detection_->getScore() = matched_detection->getScore();
 
   // If the track was actively tracked, just increment the tracklet length
   // Otherwise, mark the track as tracked again and reset the tracklet length
