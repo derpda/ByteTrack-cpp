@@ -38,9 +38,9 @@ class DetectionImpl : public byte_track::Detection {
   DetectionImpl(const RectImpl &rect, float score)
       : rect_(rect), score_(score) {}
 
-  const RectImpl &getRect() const override { return rect_; }
+  const RectImpl &get_rect() const override { return rect_; }
 
-  const float &getScore() const override { return score_; }
+  const float &get_score() const override { return score_; }
 };
 
 constexpr double EPS = 1e-2;
@@ -154,8 +154,8 @@ TEST(ByteTrack, BYTETracker) {
       // impl
       EXPECT_EQ(outputs.size(), outputs_ref[frame_id].size());
       for (const auto &outputs_per_frame : outputs) {
-        const auto &rect = outputs_per_frame->getDetection().getRect();
-        const auto &track_id = outputs_per_frame->getTrackId();
+        const auto &rect = outputs_per_frame->get_detection().get_rect();
+        const auto &track_id = outputs_per_frame->get_track_id();
         const auto &ref = outputs_ref[frame_id][track_id];
         EXPECT_NEAR(ref.top(), rect.top(), EPS);
         EXPECT_NEAR(ref.left(), rect.left(), EPS);

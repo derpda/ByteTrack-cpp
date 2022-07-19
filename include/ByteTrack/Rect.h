@@ -21,10 +21,10 @@ class Rect {
   virtual float& width();
   virtual float& height();
 
-  Xyah getXyah() const;
+  Xyah get_xyah() const;
 
   void set_from_xyah(const Xyah& xyah);
 };
 
-float calcIoU(const Rect& A, const Rect& B);
+float calc_iou(const Rect& A, const Rect& B);
 }  // namespace byte_track

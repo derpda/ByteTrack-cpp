@@ -18,29 +18,29 @@ Track::Track(DetectionPtr detection, size_t start_frame_id, size_t track_id)
       frame_id_(start_frame_id),
       start_frame_id_(start_frame_id),
       tracklet_len_(0) {
-  kalman_filter_.initiate(detection->getRect().getXyah());
+  kalman_filter_.initiate(detection->get_rect().get_xyah());
 }
 
-const Detection& Track::getDetection() const { return *detection_.get(); }
+const Detection& Track::get_detection() const { return *detection_.get(); }
 
-const TrackState& Track::getTrackState() const { return state_; }
+const TrackState& Track::get_track_state() const { return state_; }
 
-bool Track::isConfirmed() const { return is_confirmed_; }
+bool Track::is_confirmed() const { return is_confirmed_; }
 
-size_t Track::getTrackId() const { return track_id_; }
+size_t Track::get_track_id() const { return track_id_; }
 
-size_t Track::getFrameId() const { return frame_id_; }
+size_t Track::get_frame_id() const { return frame_id_; }
 
-size_t Track::getStartFrameId() const { return start_frame_id_; }
+size_t Track::get_start_frame_id() const { return start_frame_id_; }
 
-size_t Track::getTrackletLength() const { return tracklet_len_; }
+size_t Track::get_tracklet_length() const { return tracklet_len_; }
 
 void Track::predict() { kalman_filter_.predict(state_ != TrackState::Tracked); }
 
 void Track::update(const DetectionPtr& matched_detection, size_t frame_id) {
-  detection_->getRect().set_from_xyah(
-      kalman_filter_.update(matched_detection->getRect().getXyah()));
-  detection_->getScore() = matched_detection->getScore();
+  detection_->get_rect().set_from_xyah(
+      kalman_filter_.update(matched_detection->get_rect().get_xyah()));
+  detection_->get_score() = matched_detection->get_score();
 
   // If the track was actively tracked, just increment the tracklet length
   // Otherwise, mark the track as tracked again and reset the tracklet length
@@ -54,8 +54,8 @@ void Track::update(const DetectionPtr& matched_detection, size_t frame_id) {
   frame_id_ = frame_id;
 }
 
-void Track::markAsLost() { state_ = TrackState::Lost; }
+void Track::mark_as_lost() { state_ = TrackState::Lost; }
 
-void Track::markAsRemoved() { state_ = TrackState::Removed; }
+void Track::mark_as_removed() { state_ = TrackState::Removed; }
 
 }  // namespace byte_track

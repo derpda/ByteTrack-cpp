@@ -24,20 +24,20 @@ class Track {
   Track() = delete;
   Track(DetectionPtr detection, size_t start_frame_id, size_t track_id);
 
-  const Detection& getDetection() const;
+  const Detection& get_detection() const;
 
-  const TrackState& getTrackState() const;
-  bool isConfirmed() const;
-  size_t getTrackId() const;
-  size_t getFrameId() const;
-  size_t getStartFrameId() const;
-  size_t getTrackletLength() const;
+  const TrackState& get_track_state() const;
+  bool is_confirmed() const;
+  size_t get_track_id() const;
+  size_t get_frame_id() const;
+  size_t get_start_frame_id() const;
+  size_t get_tracklet_length() const;
 
   void predict();
   void update(const DetectionPtr& new_track, size_t frame_id);
 
-  void markAsLost();
-  void markAsRemoved();
+  void mark_as_lost();
+  void mark_as_removed();
 
  private:
   DetectionPtr detection_;

@@ -20,7 +20,7 @@ float& Rect::height() {
   return const_cast<float&>(const_cast<const Rect*>(this)->height());
 }
 
-Xyah Rect::getXyah() const {
+Xyah Rect::get_xyah() const {
   return {
       left() + width() / 2,
       top() + height() / 2,
@@ -37,7 +37,7 @@ void Rect::set_from_xyah(const Xyah& xyah) {
   height() = xyah(3);
 }
 
-float calcIoU(const Rect& A, const Rect& B) {
+float calc_iou(const Rect& A, const Rect& B) {
   const float box_area = (B.width() + 1) * (B.height() + 1);
   const float iw = std::min(A.left() + A.width(), B.left() + B.width()) -
                    std::max(A.left(), B.left()) + 1;

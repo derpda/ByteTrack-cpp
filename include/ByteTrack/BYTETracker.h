@@ -23,36 +23,37 @@ class BYTETracker {
  private:
   std::tuple<std::vector<TrackPtr>, std::vector<TrackPtr>,
              std::vector<DetectionPtr>>
-  iouAssociation(const std::vector<TrackPtr> &track_pool,
-                 const std::vector<DetectionPtr> &detections);
+  iou_association(const std::vector<TrackPtr> &track_pool,
+                  const std::vector<DetectionPtr> &detections);
 
-  std::vector<TrackPtr> lowScoreAssociation(
+  std::vector<TrackPtr> low_score_association(
       std::vector<TrackPtr> &matched_tracks,
       const std::vector<DetectionPtr> &low_score_detections,
       const std::vector<TrackPtr> &unmatched_tracked_tracks);
 
-  std::vector<TrackPtr> initNewTracks(
+  std::vector<TrackPtr> init_new_tracks(
       std::vector<TrackPtr> &matched_tracks,
       const std::vector<TrackPtr> &inactive_tracks,
       const std::vector<DetectionPtr> &unmatched_detections);
 
-  std::vector<TrackPtr> jointTracks(const std::vector<TrackPtr> &a_tlist,
-                                    const std::vector<TrackPtr> &b_tlist) const;
+  std::vector<TrackPtr> joint_tracks(
+      const std::vector<TrackPtr> &a_tlist,
+      const std::vector<TrackPtr> &b_tlist) const;
 
-  std::vector<TrackPtr> subTracks(const std::vector<TrackPtr> &a_tlist,
-                                  const std::vector<TrackPtr> &b_tlist) const;
+  std::vector<TrackPtr> sub_tracks(const std::vector<TrackPtr> &a_tlist,
+                                   const std::vector<TrackPtr> &b_tlist) const;
 
   std::tuple<std::vector<TrackPtr>, std::vector<TrackPtr>>
-  removeDuplicateTracks(const std::vector<TrackPtr> &a_tracks,
-                        const std::vector<TrackPtr> &b_tracks) const;
+  remove_duplicate_tracks(const std::vector<TrackPtr> &a_tracks,
+                          const std::vector<TrackPtr> &b_tracks) const;
 
   std::tuple<std::vector<std::pair<TrackPtr, DetectionPtr>>,
              std::vector<TrackPtr>, std::vector<DetectionPtr>>
-  linearAssignment(const std::vector<TrackPtr> &tracks,
-                   const std::vector<DetectionPtr> &detections,
-                   float thresh) const;
+  linear_assignment(const std::vector<TrackPtr> &tracks,
+                    const std::vector<DetectionPtr> &detections,
+                    float thresh) const;
 
-  std::tuple<std::vector<int>, std::vector<int>, double> execLapjv(
+  std::tuple<std::vector<int>, std::vector<int>, double> exec_lapjv(
       const std::vector<std::vector<float>> &cost, bool extend_cost = false,
       float cost_limit = std::numeric_limits<float>::max(),
       bool return_cost = true) const;
