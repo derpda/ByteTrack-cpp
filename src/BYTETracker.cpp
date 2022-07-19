@@ -79,11 +79,11 @@ std::vector<TrackPtr> BYTETracker::lowScoreAssociation(
 
 std::vector<TrackPtr> BYTETracker::initNewTracks(
     std::vector<TrackPtr> &matched_tracks,
-    const std::vector<TrackPtr> &inactive_tracks,
+    const std::vector<TrackPtr> &unconfirmed_tracks,
     const std::vector<DetectionPtr> &unmatched_detections) {
   // Deal with unconfirmed tracks, usually tracks with only one beginning frame
-  auto [matches, unconfirmed_tracks, new_detections] =
-      linearAssignment(inactive_tracks, unmatched_detections, 0.7);
+  auto [matches, unmatched_unconfirmed_tracks, new_detections] =
+      linearAssignment(unconfirmed_tracks, unmatched_detections, 0.7);
 
   for (const auto &match : matches) {
     match.first->update(match.second, frame_id_);
@@ -91,7 +91,7 @@ std::vector<TrackPtr> BYTETracker::initNewTracks(
   }
 
   std::vector<TrackPtr> new_removed_tracks;
-  for (const auto &track : unconfirmed_tracks) {
+  for (const auto &track : unmatched_unconfirmed_tracks) {
     track->markAsRemoved();
     new_removed_tracks.push_back(track);
   }
@@ -123,19 +123,19 @@ std::vector<TrackPtr> BYTETracker::update(
       low_score_detections.push_back(detection);
   }
 
-  // Sort existing tracks by activity
-  std::vector<TrackPtr> active_tracks;
-  std::vector<TrackPtr> inactive_tracks;
+  // Sort existing tracks by confirmed status
+  std::vector<TrackPtr> confirmed_tracks;
+  std::vector<TrackPtr> unconfirmed_tracks;
 
   for (const auto &track : tracked_tracks_) {
     if (!track->isConfirmed())
-      inactive_tracks.push_back(track);
+      unconfirmed_tracks.push_back(track);
     else
-      active_tracks.push_back(track);
+      confirmed_tracks.push_back(track);
   }
 
   std::vector<TrackPtr> track_pool;
-  track_pool = jointTracks(active_tracks, lost_tracks_);
+  track_pool = jointTracks(confirmed_tracks, lost_tracks_);
 
   // Predict current pose by KF
   for (auto &track : track_pool) track->predict();
@@ -151,7 +151,7 @@ std::vector<TrackPtr> BYTETracker::update(
 
   ////////// Step 4: Init new tracks                                  //////////
   auto new_removed_tracks =
-      initNewTracks(matched_tracks, inactive_tracks, unmatched_detections);
+      initNewTracks(matched_tracks, unconfirmed_tracks, unmatched_detections);
 
   ////////// Step 5: Update state                                     //////////
   for (auto &lost_track : lost_tracks_) {
