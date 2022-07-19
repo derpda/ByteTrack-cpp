@@ -55,11 +55,10 @@ class BYTETracker {
   linearAssignment(const std::vector<TrackPtr> &a_tracks,
                    const std::vector<TrackPtr> &b_tracks, float thresh) const;
 
-  double execLapjv(const std::vector<std::vector<float>> &cost,
-                   std::vector<int> &rowsol, std::vector<int> &colsol,
-                   bool extend_cost = false,
-                   float cost_limit = std::numeric_limits<float>::max(),
-                   bool return_cost = true) const;
+  std::tuple<std::vector<int>, std::vector<int>, double> execLapjv(
+      const std::vector<std::vector<float>> &cost, bool extend_cost = false,
+      float cost_limit = std::numeric_limits<float>::max(),
+      bool return_cost = true) const;
 
  private:
   float track_thresh_;

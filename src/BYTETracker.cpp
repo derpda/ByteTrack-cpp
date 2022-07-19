@@ -346,9 +346,7 @@ BYTETracker::linearAssignment(const std::vector<TrackPtr> &a_tracks,
   std::vector<std::pair<TrackPtr, TrackPtr>> matches;
   std::vector<TrackPtr> a_unmatched, b_unmatched;
 
-  std::vector<int> rowsol;
-  std::vector<int> colsol;
-  execLapjv(cost_matrix, rowsol, colsol, true, thresh);
+  auto [rowsol, colsol, _] = execLapjv(cost_matrix, true, thresh);
   for (size_t i = 0; i < rowsol.size(); i++) {
     if (rowsol[i] >= 0)
       matches.push_back({a_tracks[i], b_tracks[rowsol[i]]});
@@ -362,84 +360,68 @@ BYTETracker::linearAssignment(const std::vector<TrackPtr> &a_tracks,
   return {std::move(matches), std::move(a_unmatched), std::move(b_unmatched)};
 }
 
-double BYTETracker::execLapjv(const std::vector<std::vector<float>> &cost,
-                              std::vector<int> &rowsol,
-                              std::vector<int> &colsol, bool extend_cost,
-                              float cost_limit, bool return_cost) const {
-  std::vector<std::vector<float>> cost_c;
-  cost_c.assign(cost.begin(), cost.end());
-
-  std::vector<std::vector<float>> cost_c_extended;
-
+std::tuple<std::vector<int>, std::vector<int>, double> BYTETracker::execLapjv(
+    const std::vector<std::vector<float>> &cost, bool extend_cost,
+    float cost_limit, bool return_cost) const {
   int n_rows = cost.size();
   int n_cols = cost[0].size();
-  rowsol.resize(n_rows);
-  colsol.resize(n_cols);
+  std::vector<int> rowsol(n_rows);
+  std::vector<int> colsol(n_cols);
 
-  int n = 0;
-  if (n_rows == n_cols) {
-    n = n_rows;
-  } else {
-    if (!extend_cost) {
-      throw std::runtime_error("The `extend_cost` variable should set True");
-    }
+  if (n_rows != n_cols && !extend_cost) {
+    throw std::runtime_error("The `extend_cost` variable should set True");
   }
 
+  int n = 0;
+  std::vector<float> cost_c;
   if (extend_cost || cost_limit < std::numeric_limits<float>::max()) {
     n = n_rows + n_cols;
-    cost_c_extended.resize(n);
-    for (size_t i = 0; i < cost_c_extended.size(); i++)
-      cost_c_extended[i].resize(n);
+    cost_c.resize(n * n);
 
     if (cost_limit < std::numeric_limits<float>::max()) {
-      for (size_t i = 0; i < cost_c_extended.size(); i++) {
-        for (size_t j = 0; j < cost_c_extended[i].size(); j++) {
-          cost_c_extended[i][j] = cost_limit / 2.0;
+      for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+          cost_c[i * n + j] = cost_limit / 2.0;
         }
       }
     } else {
       float cost_max = -1;
-      for (size_t i = 0; i < cost_c.size(); i++) {
-        for (size_t j = 0; j < cost_c[i].size(); j++) {
-          if (cost_c[i][j] > cost_max) cost_max = cost_c[i][j];
+      for (size_t i = 0; i < cost.size(); i++) {
+        for (size_t j = 0; j < cost[i].size(); j++) {
+          if (cost[i][j] > cost_max) cost_max = cost[i][j];
         }
       }
-      for (size_t i = 0; i < cost_c_extended.size(); i++) {
-        for (size_t j = 0; j < cost_c_extended[i].size(); j++) {
-          cost_c_extended[i][j] = cost_max + 1;
+      for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+          cost_c[i * n + j] = cost_max + 1;
         }
       }
     }
 
-    for (size_t i = n_rows; i < cost_c_extended.size(); i++) {
-      for (size_t j = n_cols; j < cost_c_extended[i].size(); j++) {
-        cost_c_extended[i][j] = 0;
+    for (int i = n_rows; i < n; i++) {
+      for (int j = n_cols; j < n; j++) {
+        cost_c[i * n + j] = 0;
       }
     }
     for (int i = 0; i < n_rows; i++) {
       for (int j = 0; j < n_cols; j++) {
-        cost_c_extended[i][j] = cost_c[i][j];
+        cost_c[i * n + j] = cost[i][j];
       }
     }
-
-    cost_c.clear();
-    cost_c.assign(cost_c_extended.begin(), cost_c_extended.end());
-  }
-
-  double **cost_ptr;
-  cost_ptr = new double *[sizeof(double *) * n];
-  for (int i = 0; i < n; i++) cost_ptr[i] = new double[sizeof(double) * n];
-
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
-      cost_ptr[i][j] = cost_c[i][j];
+  } else {
+    n = n_rows;
+    cost_c.resize(n_rows * n_cols);
+    for (int i = 0; i < n_rows; i++) {
+      for (int j = 0; j < n_cols; j++) {
+        cost_c[i * n_cols + j] = cost[i][j];
+      }
     }
   }
 
   int *x_c = new int[sizeof(int) * n];
   int *y_c = new int[sizeof(int) * n];
 
-  int ret = lapjv_internal(n, cost_ptr, x_c, y_c);
+  int ret = lapjv_internal(n, cost_c, x_c, y_c);
   if (ret != 0) {
     throw std::runtime_error("The result of lapjv_internal() is invalid.");
   }
@@ -461,23 +443,19 @@ double BYTETracker::execLapjv(const std::vector<std::vector<float>> &cost,
     if (return_cost) {
       for (size_t i = 0; i < rowsol.size(); i++) {
         if (rowsol[i] != -1) {
-          opt += cost_ptr[i][rowsol[i]];
+          opt += cost_c[i * n_cols + rowsol[i]];
         }
       }
     }
   } else if (return_cost) {
     for (size_t i = 0; i < rowsol.size(); i++) {
-      opt += cost_ptr[i][rowsol[i]];
+      opt += cost_c[i * n_cols + rowsol[i]];
     }
   }
-
-  for (int i = 0; i < n; i++) {
-    delete[] cost_ptr[i];
-  }
-  delete[] cost_ptr;
+  
   delete[] x_c;
   delete[] y_c;
 
-  return opt;
+  return {std::move(rowsol), std::move(colsol), opt};
 }
 }  // namespace byte_track

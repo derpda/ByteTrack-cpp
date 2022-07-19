@@ -17,8 +17,9 @@ enum class fp_t {
 
 /** Column-reduction and reduction transfer for a dense cost matrix.
  */
-int _ccrrt_dense(const size_t n, double *cost[], std::vector<int> &free_rows,
-                 int *x, int *y, std::vector<double> &v) {
+int _ccrrt_dense(const size_t n, const std::vector<float> &cost,
+                 std::vector<int> &free_rows, int *x, int *y,
+                 std::vector<double> &v) {
   int n_free_rows;
   std::vector<bool> unique(n, true);
 
@@ -29,7 +30,7 @@ int _ccrrt_dense(const size_t n, double *cost[], std::vector<int> &free_rows,
   }
   for (size_t i = 0; i < n; i++) {
     for (size_t j = 0; j < n; j++) {
-      const double c = cost[i][j];
+      const double c = cost[i * n + j];
       if (c < v[j]) {
         v[j] = c;
         y[j] = i;
@@ -60,7 +61,7 @@ int _ccrrt_dense(const size_t n, double *cost[], std::vector<int> &free_rows,
         if (j2 == (size_t)j) {
           continue;
         }
-        const double c = cost[i][j2] - v[j2];
+        const double c = cost[i * n + j2] - v[j2];
         if (c < min) {
           min = c;
         }
@@ -73,9 +74,9 @@ int _ccrrt_dense(const size_t n, double *cost[], std::vector<int> &free_rows,
 
 /** Augmenting row reduction for a dense cost matrix.
  */
-int _carr_dense(const size_t n, double *cost[], const size_t n_free_rows,
-                std::vector<int> &free_rows, int *x, int *y,
-                std::vector<double> &v) {
+int _carr_dense(const size_t n, const std::vector<float> &cost,
+                const size_t n_free_rows, std::vector<int> &free_rows, int *x,
+                int *y, std::vector<double> &v) {
   size_t current = 0;
   int new_free_rows = 0;
   size_t rr_cnt = 0;
@@ -88,11 +89,11 @@ int _carr_dense(const size_t n, double *cost[], const size_t n_free_rows,
     rr_cnt++;
     const int free_i = free_rows[current++];
     j1 = 0;
-    v1 = cost[free_i][0] - v[0];
+    v1 = cost[free_i * n] - v[0];
     j2 = -1;
     v2 = LARGE;
     for (size_t j = 1; j < n; j++) {
-      const double c = cost[free_i][j] - v[j];
+      const double c = cost[free_i * n + j] - v[j];
       if (c < v2) {
         if (c >= v1) {
           v2 = c;
@@ -155,8 +156,8 @@ size_t _find_dense(const size_t n, size_t lo, const std::vector<double> &d,
 
 // Scan all columns in TODO starting from arbitrary column in SCAN
 // and try to decrease d of the TODO columns using the SCAN column.
-int _scan_dense(const size_t n, double *cost[], size_t *plo, size_t *phi,
-                std::vector<double> &d, std::vector<int> &cols,
+int _scan_dense(const size_t n, const std::vector<float> &cost, size_t *plo,
+                size_t *phi, std::vector<double> &d, std::vector<int> &cols,
                 std::vector<int> &pred, int *y, const std::vector<double> &v) {
   size_t lo = *plo;
   size_t hi = *phi;
@@ -166,11 +167,11 @@ int _scan_dense(const size_t n, double *cost[], size_t *plo, size_t *phi,
     int j = cols[lo++];
     const int i = y[j];
     const double mind = d[j];
-    h = cost[i][j] - v[j] - mind;
+    h = cost[i * n + j] - v[j] - mind;
     // For all columns in TODO
     for (size_t k = hi; k < n; k++) {
       j = cols[k];
-      cred_ij = cost[i][j] - v[j] - h;
+      cred_ij = cost[i * n + j] - v[j] - h;
       if (cred_ij < d[j]) {
         d[j] = cred_ij;
         pred[j] = i;
@@ -196,8 +197,9 @@ int _scan_dense(const size_t n, double *cost[], size_t *plo, size_t *phi,
  *
  * \return The closest free column index.
  */
-int find_path_dense(const size_t n, double *cost[], const int start_i, int *y,
-                    std::vector<double> &v, std::vector<int> &pred) {
+int find_path_dense(const size_t n, const std::vector<float> &cost,
+                    const int start_i, int *y, std::vector<double> &v,
+                    std::vector<int> &pred) {
   size_t lo = 0, hi = 0;
   int final_j = -1;
   size_t n_ready = 0;
@@ -207,7 +209,7 @@ int find_path_dense(const size_t n, double *cost[], const int start_i, int *y,
   for (size_t i = 0; i < n; i++) {
     cols[i] = i;
     pred[i] = start_i;
-    d[i] = cost[start_i][i] - v[i];
+    d[i] = cost[start_i * n + i] - v[i];
   }
 
   while (final_j == -1) {
@@ -240,9 +242,9 @@ int find_path_dense(const size_t n, double *cost[], const int start_i, int *y,
 
 /** Augment for a dense cost matrix.
  */
-int _ca_dense(const size_t n, double *cost[], const size_t n_free_rows,
-              const std::vector<int> &free_rows, int *x, int *y,
-              std::vector<double> &v) {
+int _ca_dense(const size_t n, const std::vector<float> &cost,
+              const size_t n_free_rows, const std::vector<int> &free_rows,
+              int *x, int *y, std::vector<double> &v) {
   std::vector<int> pred(n);
 
   for (size_t row_n = 0; row_n < n_free_rows; ++row_n) {
@@ -272,7 +274,8 @@ int _ca_dense(const size_t n, double *cost[], const size_t n_free_rows,
 }  // namespace
 
 /** Solve dense sparse LAP. */
-int byte_track::lapjv_internal(const size_t n, double *cost[], int *x, int *y) {
+int byte_track::lapjv_internal(const size_t n, const std::vector<float> &cost,
+                               int *x, int *y) {
   int ret;
   std::vector<int> free_rows(n);
   std::vector<double> v(n);
