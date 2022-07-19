@@ -7,9 +7,6 @@
 namespace byte_track {
 using Xyah = Eigen::Matrix<float, 1, 4, Eigen::RowMajor>;
 
-class Rect;
-using RectPtr = std::shared_ptr<Rect>;
-
 class Rect {
  public:
   virtual ~Rect() = default;
