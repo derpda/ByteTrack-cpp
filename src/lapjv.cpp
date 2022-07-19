@@ -18,8 +18,8 @@ enum class fp_t {
 /** Column-reduction and reduction transfer for a dense cost matrix.
  */
 int _ccrrt_dense(const size_t n, const std::vector<float> &cost,
-                 std::vector<int> &free_rows, int *x, int *y,
-                 std::vector<double> &v) {
+                 std::vector<int> &free_rows, std::vector<int> &x,
+                 std::vector<int> &y, std::vector<double> &v) {
   int n_free_rows;
   std::vector<bool> unique(n, true);
 
@@ -75,8 +75,9 @@ int _ccrrt_dense(const size_t n, const std::vector<float> &cost,
 /** Augmenting row reduction for a dense cost matrix.
  */
 int _carr_dense(const size_t n, const std::vector<float> &cost,
-                const size_t n_free_rows, std::vector<int> &free_rows, int *x,
-                int *y, std::vector<double> &v) {
+                const size_t n_free_rows, std::vector<int> &free_rows,
+                std::vector<int> &x, std::vector<int> &y,
+                std::vector<double> &v) {
   size_t current = 0;
   int new_free_rows = 0;
   size_t rr_cnt = 0;
@@ -158,7 +159,8 @@ size_t _find_dense(const size_t n, size_t lo, const std::vector<double> &d,
 // and try to decrease d of the TODO columns using the SCAN column.
 int _scan_dense(const size_t n, const std::vector<float> &cost, size_t *plo,
                 size_t *phi, std::vector<double> &d, std::vector<int> &cols,
-                std::vector<int> &pred, int *y, const std::vector<double> &v) {
+                std::vector<int> &pred, const std::vector<int> &y,
+                const std::vector<double> &v) {
   size_t lo = *plo;
   size_t hi = *phi;
   double h, cred_ij;
@@ -198,8 +200,8 @@ int _scan_dense(const size_t n, const std::vector<float> &cost, size_t *plo,
  * \return The closest free column index.
  */
 int find_path_dense(const size_t n, const std::vector<float> &cost,
-                    const int start_i, int *y, std::vector<double> &v,
-                    std::vector<int> &pred) {
+                    const int start_i, const std::vector<int> &y,
+                    std::vector<double> &v, std::vector<int> &pred) {
   size_t lo = 0, hi = 0;
   int final_j = -1;
   size_t n_ready = 0;
@@ -244,7 +246,8 @@ int find_path_dense(const size_t n, const std::vector<float> &cost,
  */
 int _ca_dense(const size_t n, const std::vector<float> &cost,
               const size_t n_free_rows, const std::vector<int> &free_rows,
-              int *x, int *y, std::vector<double> &v) {
+              std::vector<int> &x, std::vector<int> &y,
+              std::vector<double> &v) {
   std::vector<int> pred(n);
 
   for (size_t row_n = 0; row_n < n_free_rows; ++row_n) {
@@ -275,7 +278,7 @@ int _ca_dense(const size_t n, const std::vector<float> &cost,
 
 /** Solve dense sparse LAP. */
 int byte_track::lapjv_internal(const size_t n, const std::vector<float> &cost,
-                               int *x, int *y) {
+                               std::vector<int> &x, std::vector<int> &y) {
   int ret;
   std::vector<int> free_rows(n);
   std::vector<double> v(n);

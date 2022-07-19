@@ -418,8 +418,7 @@ std::tuple<std::vector<int>, std::vector<int>, double> BYTETracker::execLapjv(
     }
   }
 
-  int *x_c = new int[sizeof(int) * n];
-  int *y_c = new int[sizeof(int) * n];
+  std::vector<int> x_c(n), y_c(n);
 
   int ret = lapjv_internal(n, cost_c, x_c, y_c);
   if (ret != 0) {
@@ -452,9 +451,6 @@ std::tuple<std::vector<int>, std::vector<int>, double> BYTETracker::execLapjv(
       opt += cost_c[i * n_cols + rowsol[i]];
     }
   }
-  
-  delete[] x_c;
-  delete[] y_c;
 
   return {std::move(rowsol), std::move(colsol), opt};
 }
