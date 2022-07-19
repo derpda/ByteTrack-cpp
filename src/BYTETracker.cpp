@@ -128,11 +128,11 @@ std::vector<TrackPtr> BYTETracker::update(
   // Sort new tracks from detection by score
   std::vector<DetectionPtr> detections;
   std::vector<DetectionPtr> low_score_detections;
-  for (const auto &track : input_detections) {
-    if (track->getScore() >= track_thresh_)
-      detections.push_back(track);
+  for (const auto &detection : input_detections) {
+    if (detection->getScore() >= track_thresh_)
+      detections.push_back(detection);
     else
-      low_score_detections.push_back(track);
+      low_score_detections.push_back(detection);
   }
 
   // Sort existing tracks by activity
