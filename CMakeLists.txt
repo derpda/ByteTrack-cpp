@@ -35,6 +35,7 @@ endif()
 
 add_library(${PROJECT_NAME} SHARED
   ${CMAKE_CURRENT_SOURCE_DIR}/src/BYTETracker.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/Detection.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/KalmanFilter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/lapjv.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/Rect.cpp

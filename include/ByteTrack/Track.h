@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ByteTrack/Detection.h"
 #include "ByteTrack/KalmanFilter.h"
 #include "ByteTrack/Rect.h"
 
@@ -21,12 +22,10 @@ enum class TrackState {
 
 class Track {
  public:
-  Track(const Rect& rect, int label, float score);
+  Track(DetectionPtr detection);
   ~Track();
 
-  const Rect& getRect() const;
-  int getLabel() const;
-  float getScore() const;
+  const Detection& getDetection() const;
 
   const TrackState& getTrackState() const;
   bool isActivated() const;
@@ -36,21 +35,19 @@ class Track {
   size_t getTrackletLength() const;
 
   void activate(size_t frame_id, size_t track_id);
-  void reActivate(const Track& new_track, size_t frame_id,
+  void reActivate(const Detection& new_track, size_t frame_id,
                   int new_track_id = -1);
 
   void predict();
-  void update(const Track& new_track, size_t frame_id);
+  void update(const Detection& new_track, size_t frame_id);
 
   void markAsLost();
   void markAsRemoved();
 
  private:
-  KalmanFilter kalman_filter_;
+  DetectionPtr detection_;
 
-  Rect rect_;
-  int label_;
-  float score_;
+  KalmanFilter kalman_filter_;
 
   TrackState state_;
   bool is_activated_;

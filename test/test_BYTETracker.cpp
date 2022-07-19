@@ -1,4 +1,5 @@
 #include "ByteTrack/BYTETracker.h"
+#include "ByteTrack/Detection.h"
 #include "ByteTrack/Track.h"
 
 #include "boost/foreach.hpp"
@@ -31,9 +32,9 @@ T get_data(const boost::property_tree::ptree &pt, const std::string &key) {
   return ret;
 }
 
-std::map<size_t, std::vector<byte_track::TrackPtr>> get_inputs_ref(
+std::map<size_t, std::vector<byte_track::DetectionPtr>> get_inputs_ref(
     const boost::property_tree::ptree &pt) {
-  std::map<size_t, std::vector<byte_track::TrackPtr>> inputs_ref;
+  std::map<size_t, std::vector<byte_track::DetectionPtr>> inputs_ref;
   BOOST_FOREACH (const boost::property_tree::ptree::value_type &child,
                  pt.get_child("results")) {
     const boost::property_tree::ptree &result = child.second;
@@ -46,11 +47,12 @@ std::map<size_t, std::vector<byte_track::TrackPtr>> get_inputs_ref(
 
     decltype(inputs_ref)::iterator itr = inputs_ref.find(frame_id);
     if (itr != inputs_ref.end()) {
-      itr->second.emplace_back(std::make_shared<byte_track::Track>(
-          byte_track::Rect(x, y, width, height), 0, prob));
+      itr->second.emplace_back(std::make_shared<byte_track::Detection>(
+          byte_track::Rect(x, y, width, height), prob));
     } else {
-      std::vector<byte_track::TrackPtr> v{std::make_shared<byte_track::Track>(
-          byte_track::Rect(x, y, width, height), 0, prob)};
+      std::vector<byte_track::DetectionPtr> v{
+          std::make_shared<byte_track::Detection>(
+              byte_track::Rect(x, y, width, height), prob)};
       inputs_ref.emplace_hint(inputs_ref.end(), frame_id, v);
     }
   }
@@ -122,7 +124,7 @@ TEST(ByteTrack, BYTETracker) {
       // impl
       EXPECT_EQ(outputs.size(), outputs_ref[frame_id].size());
       for (const auto &outputs_per_frame : outputs) {
-        const auto &rect = outputs_per_frame->getRect();
+        const auto &rect = outputs_per_frame->getDetection().getRect();
         const auto &track_id = outputs_per_frame->getTrackId();
         const auto &ref = outputs_ref[frame_id][track_id];
         EXPECT_NEAR(ref.x(), rect.x(), EPS);

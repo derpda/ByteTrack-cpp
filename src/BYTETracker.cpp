@@ -1,5 +1,7 @@
 #include "ByteTrack/BYTETracker.h"
 
+#include "ByteTrack/Detection.h"
+#include "ByteTrack/Rect.h"
 #include "ByteTrack/Track.h"
 
 #include <algorithm>
@@ -26,9 +28,10 @@ BYTETracker::BYTETracker(int frame_rate, int track_buffer, float track_thresh,
 
 BYTETracker::~BYTETracker() {}
 
-std::array<std::vector<TrackPtr>, 4> BYTETracker::iouAssociation(
-    const std::vector<TrackPtr> &track_pool,
-    const std::vector<TrackPtr> &detections) {
+std::tuple<std::vector<TrackPtr>, std::vector<TrackPtr>, std::vector<TrackPtr>,
+           std::vector<DetectionPtr>>
+BYTETracker::iouAssociation(const std::vector<TrackPtr> &track_pool,
+                            const std::vector<DetectionPtr> &detections) {
   auto [matches, unmatched_tracks, unmatched_detections] =
       linearAssignment(track_pool, detections, match_thresh_);
 
@@ -53,13 +56,13 @@ std::array<std::vector<TrackPtr>, 4> BYTETracker::iouAssociation(
     }
   }
   return {std::move(matched_tracks), std::move(unmatched_tracked_tracks),
-          std::move(unmatched_detections), std::move(refound_tracks)};
+          std::move(refound_tracks), std::move(unmatched_detections)};
 }
 
 std::vector<TrackPtr> BYTETracker::lowScoreAssociation(
     std::vector<TrackPtr> &matched_tracks,
     std::vector<TrackPtr> &refound_tracks,
-    const std::vector<TrackPtr> &low_score_detections,
+    const std::vector<DetectionPtr> &low_score_detections,
     const std::vector<TrackPtr> &unmatched_tracked_tracks) {
   auto [matches, unmatched_tracks, unmatch_detection] =
       linearAssignment(unmatched_tracked_tracks, low_score_detections, 0.5);
@@ -89,9 +92,9 @@ std::vector<TrackPtr> BYTETracker::lowScoreAssociation(
 std::vector<TrackPtr> BYTETracker::initNewTracks(
     std::vector<TrackPtr> &matched_tracks,
     const std::vector<TrackPtr> &inactive_tracks,
-    const std::vector<TrackPtr> &unmatched_detections) {
+    const std::vector<DetectionPtr> &unmatched_detections) {
   // Deal with unconfirmed tracks, usually tracks with only one beginning frame
-  auto [matches, unconfirmed_tracks, new_tracks] =
+  auto [matches, unconfirmed_tracks, new_detections] =
       linearAssignment(inactive_tracks, unmatched_detections, 0.7);
 
   for (const auto &match : matches) {
@@ -106,24 +109,25 @@ std::vector<TrackPtr> BYTETracker::initNewTracks(
   }
 
   // Add new tracks
-  for (const auto &track : new_tracks) {
-    if (track->getScore() < high_thresh_) continue;
+  for (const auto &detection : new_detections) {
+    if (detection->getScore() < high_thresh_) continue;
+    TrackPtr new_track = std::make_shared<Track>(detection);
     track_id_count_++;
-    track->activate(frame_id_, track_id_count_);
-    matched_tracks.push_back(track);
+    new_track->activate(frame_id_, track_id_count_);
+    matched_tracks.push_back(new_track);
   }
   return new_removed_tracks;
 }
 
 std::vector<TrackPtr> BYTETracker::update(
-    const std::vector<TrackPtr> &input_detections) {
+    const std::vector<DetectionPtr> &input_detections) {
   frame_id_++;
 
   ////////// Step 1: Get detections                                   //////////
 
   // Sort new tracks from detection by score
-  std::vector<TrackPtr> detections;
-  std::vector<TrackPtr> low_score_detections;
+  std::vector<DetectionPtr> detections;
+  std::vector<DetectionPtr> low_score_detections;
   for (const auto &track : input_detections) {
     if (track->getScore() >= track_thresh_)
       detections.push_back(track);
@@ -150,8 +154,8 @@ std::vector<TrackPtr> BYTETracker::update(
 
   ////////// Step 2: Find matches between tracks and detections       //////////
   ////////// Step 2: First association, with IoU                      //////////
-  auto [matched_tracks, unmatched_tracked_tracks, unmatched_detections,
-        refound_tracks] = iouAssociation(track_pool, detections);
+  auto [matched_tracks, unmatched_tracked_tracks, refound_tracks,
+        unmatched_detections] = iouAssociation(track_pool, detections);
 
   ////////// Step 3: Second association, using low score dets         //////////
   auto new_lost_tracks =
@@ -216,40 +220,21 @@ std::vector<TrackPtr> BYTETracker::subTracks(
   return res;
 }
 
-std::vector<std::vector<float>> BYTETracker::calcIouDistance(
-    const std::vector<TrackPtr> &a_tracks,
-    const std::vector<TrackPtr> &b_tracks) const {
-  if (a_tracks.empty() || b_tracks.empty()) return {};
-
-  std::vector<std::vector<float>> ious;
-  ious.resize(a_tracks.size());
-  for (size_t i = 0; i < ious.size(); i++) {
-    ious[i].resize(b_tracks.size());
-  }
-
-  for (size_t bi = 0; bi < b_tracks.size(); bi++) {
-    for (size_t ai = 0; ai < a_tracks.size(); ai++) {
-      ious[ai][bi] = b_tracks[bi]->getRect().calcIoU(a_tracks[ai]->getRect());
-    }
-  }
-
-  std::vector<std::vector<float>> cost_matrix;
-  for (size_t i = 0; i < ious.size(); i++) {
-    std::vector<float> iou;
-    for (size_t j = 0; j < ious[i].size(); j++) {
-      iou.push_back(1 - ious[i][j]);
-    }
-    cost_matrix.push_back(iou);
-  }
-
-  return cost_matrix;
-}
-
 std::tuple<std::vector<TrackPtr>, std::vector<TrackPtr>>
 BYTETracker::removeDuplicateTracks(
     const std::vector<TrackPtr> &a_tracks,
     const std::vector<TrackPtr> &b_tracks) const {
-  const auto ious = calcIouDistance(a_tracks, b_tracks);
+  if (a_tracks.empty() || b_tracks.empty()) return {a_tracks, b_tracks};
+
+  std::vector<std::vector<float>> ious;
+  ious.resize(a_tracks.size());
+  for (size_t i = 0; i < ious.size(); i++) ious[i].resize(b_tracks.size());
+  for (size_t ai = 0; ai < a_tracks.size(); ai++) {
+    for (size_t bi = 0; bi < b_tracks.size(); bi++) {
+      ious[ai][bi] = 1 - calcIoU(b_tracks[bi]->getDetection().getRect(),
+                                 a_tracks[ai]->getDetection().getRect());
+    }
+  }
 
   std::vector<bool> a_overlapping(a_tracks.size(), false),
       b_overlapping(b_tracks.size(), false);
@@ -281,27 +266,38 @@ BYTETracker::removeDuplicateTracks(
   return {std::move(a_tracks_out), std::move(b_tracks_out)};
 }
 
-std::tuple<std::vector<std::pair<TrackPtr, TrackPtr>>, std::vector<TrackPtr>,
-           std::vector<TrackPtr>>
-BYTETracker::linearAssignment(const std::vector<TrackPtr> &a_tracks,
-                              const std::vector<TrackPtr> &b_tracks,
+std::tuple<std::vector<std::pair<TrackPtr, DetectionPtr>>,
+           std::vector<TrackPtr>, std::vector<DetectionPtr>>
+BYTETracker::linearAssignment(const std::vector<TrackPtr> &tracks,
+                              const std::vector<DetectionPtr> &detections,
                               float thresh) const {
-  const auto cost_matrix = calcIouDistance(a_tracks, b_tracks);
-  if (cost_matrix.size() == 0) return {{}, a_tracks, b_tracks};
+  if (tracks.empty() || detections.empty()) return {{}, tracks, detections};
 
-  std::vector<std::pair<TrackPtr, TrackPtr>> matches;
-  std::vector<TrackPtr> a_unmatched, b_unmatched;
+  std::vector<std::vector<float>> cost_matrix;
+  cost_matrix.resize(tracks.size());
+  for (size_t i = 0; i < cost_matrix.size(); i++)
+    cost_matrix[i].resize(detections.size());
+  for (size_t bi = 0; bi < detections.size(); bi++) {
+    for (size_t ai = 0; ai < tracks.size(); ai++) {
+      cost_matrix[ai][bi] = 1 - calcIoU(detections[bi]->getRect(),
+                                        tracks[ai]->getDetection().getRect());
+    }
+  }
+
+  std::vector<std::pair<TrackPtr, DetectionPtr>> matches;
+  std::vector<TrackPtr> a_unmatched;
+  std::vector<DetectionPtr> b_unmatched;
 
   auto [rowsol, colsol, _] = execLapjv(cost_matrix, true, thresh);
   for (size_t i = 0; i < rowsol.size(); i++) {
     if (rowsol[i] >= 0)
-      matches.push_back({a_tracks[i], b_tracks[rowsol[i]]});
+      matches.push_back({tracks[i], detections[rowsol[i]]});
     else
-      a_unmatched.push_back(a_tracks[i]);
+      a_unmatched.push_back(tracks[i]);
   }
 
   for (size_t i = 0; i < colsol.size(); i++) {
-    if (colsol[i] < 0) b_unmatched.push_back(b_tracks[i]);
+    if (colsol[i] < 0) b_unmatched.push_back(detections[i]);
   }
   return {std::move(matches), std::move(a_unmatched), std::move(b_unmatched)};
 }

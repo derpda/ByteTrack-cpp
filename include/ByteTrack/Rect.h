@@ -33,9 +33,9 @@ class Rect {
 
   Tlbr getTlbr() const;
   Xyah getXyah() const;
-
-  float calcIoU(const Rect &other) const;
 };
+
+float calcIoU(const Rect &A, const Rect &B);
 
 Rect generate_rect_by_tlbr(const Tlbr &tlbr);
 
