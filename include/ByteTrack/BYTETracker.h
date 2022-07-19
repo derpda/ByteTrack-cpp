@@ -23,13 +23,12 @@ class BYTETracker {
 
  private:
   std::tuple<std::vector<TrackPtr>, std::vector<TrackPtr>,
-             std::vector<TrackPtr>, std::vector<DetectionPtr>>
+             std::vector<DetectionPtr>>
   iouAssociation(const std::vector<TrackPtr> &track_pool,
                  const std::vector<DetectionPtr> &detections);
 
   std::vector<TrackPtr> lowScoreAssociation(
       std::vector<TrackPtr> &matched_tracks,
-      std::vector<TrackPtr> &refound_tracks,
       const std::vector<DetectionPtr> &low_score_detections,
       const std::vector<TrackPtr> &unmatched_tracked_tracks);
 

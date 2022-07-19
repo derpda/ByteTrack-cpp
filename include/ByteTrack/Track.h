@@ -27,14 +27,11 @@ class Track {
   const Detection& getDetection() const;
 
   const TrackState& getTrackState() const;
-  bool isActivated() const;
+  bool isConfirmed() const;
   size_t getTrackId() const;
   size_t getFrameId() const;
   size_t getStartFrameId() const;
   size_t getTrackletLength() const;
-
-  void reActivate(const DetectionPtr& new_track, size_t frame_id,
-                  int new_track_id = -1);
 
   void predict();
   void update(const DetectionPtr& new_track, size_t frame_id);
@@ -48,7 +45,7 @@ class Track {
   KalmanFilter kalman_filter_;
 
   TrackState state_;
-  bool is_activated_;
+  bool is_confirmed_;
   size_t track_id_;
   size_t frame_id_;
   size_t start_frame_id_;
