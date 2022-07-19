@@ -41,10 +41,10 @@ BYTETracker::iouAssociation(const std::vector<TrackPtr> &track_pool,
     const auto track = match.first;
     const auto detection = match.second;
     if (track->getTrackState() == TrackState::Tracked) {
-      track->update(*detection, frame_id_);
+      track->update(detection, frame_id_);
       matched_tracks.push_back(track);
     } else {
-      track->reActivate(*detection, frame_id_);
+      track->reActivate(detection, frame_id_);
       refound_tracks.push_back(track);
     }
   }
@@ -71,10 +71,10 @@ std::vector<TrackPtr> BYTETracker::lowScoreAssociation(
     const auto track = match.first;
     const auto detection = match.second;
     if (track->getTrackState() == TrackState::Tracked) {
-      track->update(*detection, frame_id_);
+      track->update(detection, frame_id_);
       matched_tracks.push_back(track);
     } else {
-      track->reActivate(*detection, frame_id_);
+      track->reActivate(detection, frame_id_);
       refound_tracks.push_back(track);
     }
   }
@@ -98,7 +98,7 @@ std::vector<TrackPtr> BYTETracker::initNewTracks(
       linearAssignment(inactive_tracks, unmatched_detections, 0.7);
 
   for (const auto &match : matches) {
-    match.first->update(*match.second, frame_id_);
+    match.first->update(match.second, frame_id_);
     matched_tracks.push_back(match.first);
   }
 

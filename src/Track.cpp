@@ -44,11 +44,11 @@ void Track::activate(size_t frame_id, size_t track_id) {
   tracklet_len_ = 0;
 }
 
-void Track::reActivate(const Detection& new_track, size_t frame_id,
+void Track::reActivate(const DetectionPtr& matched_detection, size_t frame_id,
                        int new_track_id) {
   detection_->setRect(generate_rect_by_xyah(
-      kalman_filter_.update(new_track.getRect().getXyah())));
-  detection_->setScore(new_track.getScore());
+      kalman_filter_.update(matched_detection->getRect().getXyah())));
+  detection_->setScore(matched_detection->getScore());
 
   state_ = TrackState::Tracked;
   is_activated_ = true;
@@ -61,10 +61,10 @@ void Track::reActivate(const Detection& new_track, size_t frame_id,
 
 void Track::predict() { kalman_filter_.predict(state_ != TrackState::Tracked); }
 
-void Track::update(const Detection& new_track, size_t frame_id) {
+void Track::update(const DetectionPtr& matched_detection, size_t frame_id) {
   detection_->setRect(generate_rect_by_xyah(
-      kalman_filter_.update(new_track.getRect().getXyah())));
-  detection_->setScore(new_track.getScore());
+      kalman_filter_.update(matched_detection->getRect().getXyah())));
+  detection_->setScore(matched_detection->getScore());
 
   state_ = TrackState::Tracked;
   is_activated_ = true;

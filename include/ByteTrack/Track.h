@@ -35,11 +35,11 @@ class Track {
   size_t getTrackletLength() const;
 
   void activate(size_t frame_id, size_t track_id);
-  void reActivate(const Detection& new_track, size_t frame_id,
+  void reActivate(const DetectionPtr& new_track, size_t frame_id,
                   int new_track_id = -1);
 
   void predict();
-  void update(const Detection& new_track, size_t frame_id);
+  void update(const DetectionPtr& new_track, size_t frame_id);
 
   void markAsLost();
   void markAsRemoved();
