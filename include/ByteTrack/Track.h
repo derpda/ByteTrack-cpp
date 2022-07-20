@@ -21,10 +21,10 @@ enum class TrackState {
 
 class Track {
  public:
+  DetectionPtr detection;
+
   Track() = delete;
   Track(DetectionPtr detection, size_t start_frame_id, size_t track_id);
-
-  const DetectionBase& get_detection() const;
 
   const TrackState& get_track_state() const;
   bool is_confirmed() const;
@@ -40,8 +40,6 @@ class Track {
   void mark_as_removed();
 
  private:
-  DetectionPtr detection_;
-
   KalmanFilter kalman_filter_;
 
   TrackState state_;
