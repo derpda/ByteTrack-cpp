@@ -4,22 +4,6 @@
 
 namespace byte_track {
 
-float& Rect::top() {
-  return const_cast<float&>(const_cast<const Rect*>(this)->top());
-}
-
-float& Rect::left() {
-  return const_cast<float&>(const_cast<const Rect*>(this)->left());
-}
-
-float& Rect::width() {
-  return const_cast<float&>(const_cast<const Rect*>(this)->width());
-}
-
-float& Rect::height() {
-  return const_cast<float&>(const_cast<const Rect*>(this)->height());
-}
-
 Xyah Rect::get_xyah() const {
   return {
       left() + width() / 2,
@@ -31,10 +15,10 @@ Xyah Rect::get_xyah() const {
 
 void Rect::set_from_xyah(const Xyah& xyah) {
   float xyah_width = xyah(2) * xyah(3);
-  left() = xyah(0) - xyah_width / 2;
-  top() = xyah(1) - xyah(3) / 2;
-  width() = xyah_width;
-  height() = xyah(3);
+  set_left(xyah(0) - xyah_width / 2);
+  set_top(xyah(1) - xyah(3) / 2);
+  set_width(xyah_width);
+  set_height(xyah(3));
 }
 
 float calc_iou(const Rect& A, const Rect& B) {
@@ -52,5 +36,18 @@ float calc_iou(const Rect& A, const Rect& B) {
   }
   return iou;
 }
+
+TlwhRect::TlwhRect(float top, float left, float width, float height)
+    : top_(top), left_(left), width_(width), height_(height) {}
+
+float TlwhRect::top() const { return top_; }
+float TlwhRect::left() const { return left_; }
+float TlwhRect::width() const { return width_; }
+float TlwhRect::height() const { return height_; }
+
+void TlwhRect::set_top(float top) { top_ = top; }
+void TlwhRect::set_left(float left) { left_ = left; }
+void TlwhRect::set_width(float width) { width_ = width; }
+void TlwhRect::set_height(float height) { height_ = height; }
 
 }  // namespace byte_track

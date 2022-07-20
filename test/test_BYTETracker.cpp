@@ -14,31 +14,15 @@
 
 namespace {
 
-class RectImpl : public byte_track::Rect {
-  float x_;
-  float y_;
-  float width_;
-  float height_;
-
- public:
-  RectImpl(float x = 0, float y = 0, float width = 0, float height = 0)
-      : x_(x), y_(y), width_(width), height_(height) {}
-
-  const float &left() const override { return x_; }
-  const float &top() const override { return y_; }
-  const float &width() const override { return width_; }
-  const float &height() const override { return height_; }
-};
-
 class DetectionImpl : public byte_track::Detection {
-  RectImpl rect_;
+  byte_track::TlwhRect rect_;
   float score_ = 0;
 
  public:
-  DetectionImpl(const RectImpl &rect, float score)
+  DetectionImpl(const byte_track::TlwhRect &rect, float score)
       : rect_(rect), score_(score) {}
 
-  const RectImpl &get_rect() const override { return rect_; }
+  const byte_track::TlwhRect &get_rect() const override { return rect_; }
 
   const float &get_score() const override { return score_; }
 };
@@ -49,7 +33,7 @@ const std::string D_RESULTS_FILE = "detection_results.json";
 const std::string T_RESULTS_FILE = "tracking_results.json";
 
 // key: track_id, value: rect of tracking object
-using BYTETrackerOut = std::map<size_t, RectImpl>;
+using BYTETrackerOut = std::map<size_t, byte_track::TlwhRect>;
 
 template <typename T>
 T get_data(const boost::property_tree::ptree &pt, const std::string &key) {
@@ -71,18 +55,18 @@ std::map<size_t, std::vector<byte_track::DetectionPtr>> get_inputs_ref(
     const boost::property_tree::ptree &result = child.second;
     const auto frame_id = get_data<int>(result, "frame_id");
     const auto prob = get_data<float>(result, "prob");
-    const auto x = get_data<float>(result, "x");
-    const auto y = get_data<float>(result, "y");
+    const auto left = get_data<float>(result, "x");
+    const auto top = get_data<float>(result, "y");
     const auto width = get_data<float>(result, "width");
     const auto height = get_data<float>(result, "height");
 
     decltype(inputs_ref)::iterator itr = inputs_ref.find(frame_id);
     if (itr != inputs_ref.end()) {
-      itr->second.emplace_back(
-          std::make_shared<DetectionImpl>(RectImpl(x, y, width, height), prob));
+      itr->second.emplace_back(std::make_shared<DetectionImpl>(
+          byte_track::TlwhRect(top, left, width, height), prob));
     } else {
-      std::vector<byte_track::DetectionPtr> v{
-          std::make_shared<DetectionImpl>(RectImpl(x, y, width, height), prob)};
+      std::vector<byte_track::DetectionPtr> v{std::make_shared<DetectionImpl>(
+          byte_track::TlwhRect(top, left, width, height), prob)};
       inputs_ref.emplace_hint(inputs_ref.end(), frame_id, v);
     }
   }
@@ -97,17 +81,18 @@ std::map<size_t, BYTETrackerOut> get_outputs_ref(
     const boost::property_tree::ptree &result = child.second;
     const auto frame_id = get_data<int>(result, "frame_id");
     const auto track_id = get_data<int>(result, "track_id");
-    const auto x = get_data<float>(result, "x");
-    const auto y = get_data<float>(result, "y");
+    const auto left = get_data<float>(result, "x");
+    const auto top = get_data<float>(result, "y");
     const auto width = get_data<float>(result, "width");
     const auto height = get_data<float>(result, "height");
 
     decltype(outputs_ref)::iterator itr = outputs_ref.find(frame_id);
     if (itr != outputs_ref.end()) {
-      itr->second.emplace(track_id, RectImpl(x, y, width, height));
+      itr->second.emplace(track_id,
+                          byte_track::TlwhRect(top, left, width, height));
     } else {
       BYTETrackerOut v{
-          {track_id, RectImpl(x, y, width, height)},
+          {track_id, byte_track::TlwhRect(top, left, width, height)},
       };
       outputs_ref.emplace_hint(outputs_ref.end(), frame_id, v);
     }

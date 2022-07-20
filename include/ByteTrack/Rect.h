@@ -11,15 +11,15 @@ class Rect {
  public:
   virtual ~Rect() = default;
 
-  virtual const float& top() const = 0;
-  virtual const float& left() const = 0;
-  virtual const float& width() const = 0;
-  virtual const float& height() const = 0;
+  virtual float top() const = 0;
+  virtual float left() const = 0;
+  virtual float width() const = 0;
+  virtual float height() const = 0;
 
-  virtual float& top();
-  virtual float& left();
-  virtual float& width();
-  virtual float& height();
+  virtual void set_top(float top) = 0;
+  virtual void set_left(float left) = 0;
+  virtual void set_width(float width) = 0;
+  virtual void set_height(float height) = 0;
 
   Xyah get_xyah() const;
 
@@ -27,4 +27,25 @@ class Rect {
 };
 
 float calc_iou(const Rect& A, const Rect& B);
+
+class TlwhRect : public Rect {
+  float top_;
+  float left_;
+  float width_;
+  float height_;
+
+ public:
+  TlwhRect(float top = 0, float left = 0, float width = 0, float height = 0);
+
+  virtual float top() const override;
+  virtual float left() const override;
+  virtual float width() const override;
+  virtual float height() const override;
+
+  virtual void set_top(float top) override;
+  virtual void set_left(float left) override;
+  virtual void set_width(float width) override;
+  virtual void set_height(float height) override;
+};
+
 }  // namespace byte_track
