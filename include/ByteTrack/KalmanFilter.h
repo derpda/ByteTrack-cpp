@@ -7,33 +7,33 @@
 namespace byte_track {
 class KalmanFilter {
  public:
-  using DetectBox = Xyah;
-
-  using StateMean = Eigen::Matrix<float, 1, 8, Eigen::RowMajor>;
-  using StateCov = Eigen::Matrix<float, 8, 8, Eigen::RowMajor>;
-
-  using StateHMean = Eigen::Matrix<float, 1, 4, Eigen::RowMajor>;
-  using StateHCov = Eigen::Matrix<float, 4, 4, Eigen::RowMajor>;
+  template <int rows, int cols>
+  using Matrix = Eigen::Matrix<float, rows, cols, Eigen::RowMajor>;
 
   KalmanFilter(float std_weight_position = 1. / 20,
                float std_weight_velocity = 1. / 160);
 
-  void initiate(const DetectBox& measurement);
+  void initiate(const RectBase& measurement);
 
   void predict(bool mean_eight_to_zero);
 
-  Xyah update(const DetectBox& measurement);
+  TlwhRect update(const RectBase& measurement);
 
  private:
   float std_weight_position_;
   float std_weight_velocity_;
 
-  Eigen::Matrix<float, 8, 8, Eigen::RowMajor> motion_mat_;
-  Eigen::Matrix<float, 4, 8, Eigen::RowMajor> update_mat_;
+  Matrix<8, 8> motion_mat_;
+  Matrix<4, 8> update_mat_;
 
-  StateMean mean_;
-  StateCov covariance_;
+  Matrix<1, 8> mean_;
+  Matrix<8, 8> covariance_;
 
-  void project(StateHMean& projected_mean, StateHCov& projected_covariance);
+  void project(Matrix<1, 4>& projected_mean,
+               Matrix<4, 4>& projected_covariance);
+
+  Matrix<1, 4> rect_to_xyah(const RectBase& rect) const;
+
+  TlwhRect xyah_to_tlwh(const Matrix<1, 4>& xyah) const;
 };
 }  // namespace byte_track
