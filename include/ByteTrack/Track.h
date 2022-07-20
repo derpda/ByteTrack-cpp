@@ -24,7 +24,7 @@ class Track {
   Track() = delete;
   Track(DetectionPtr detection, size_t start_frame_id, size_t track_id);
 
-  const Detection& get_detection() const;
+  const DetectionBase& get_detection() const;
 
   const TrackState& get_track_state() const;
   bool is_confirmed() const;

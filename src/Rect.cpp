@@ -4,7 +4,7 @@
 
 namespace byte_track {
 
-Xyah Rect::get_xyah() const {
+Xyah RectBase::xyah() const {
   return {
       left() + width() / 2,
       top() + height() / 2,
@@ -13,7 +13,7 @@ Xyah Rect::get_xyah() const {
   };
 }
 
-void Rect::set_from_xyah(const Xyah& xyah) {
+void RectBase::set_from_xyah(const Xyah& xyah) {
   float xyah_width = xyah(2) * xyah(3);
   set_left(xyah(0) - xyah_width / 2);
   set_top(xyah(1) - xyah(3) / 2);
@@ -21,7 +21,7 @@ void Rect::set_from_xyah(const Xyah& xyah) {
   set_height(xyah(3));
 }
 
-float calc_iou(const Rect& A, const Rect& B) {
+float calc_iou(const RectBase& A, const RectBase& B) {
   const float box_area = (B.width() + 1) * (B.height() + 1);
   const float iw = std::min(A.left() + A.width(), B.left() + B.width()) -
                    std::max(A.left(), B.left()) + 1;

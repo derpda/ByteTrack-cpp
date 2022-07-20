@@ -96,7 +96,7 @@ std::vector<TrackPtr> BYTETracker::init_new_tracks(
 
   // Add new tracks
   for (const auto &detection : new_detections) {
-    if (detection->get_score() < high_thresh_) continue;
+    if (detection->score() < high_thresh_) continue;
     track_id_count_++;
     TrackPtr new_track =
         std::make_shared<Track>(detection, frame_id_, track_id_count_);
@@ -115,7 +115,7 @@ std::vector<TrackPtr> BYTETracker::update(
   std::vector<DetectionPtr> detections;
   std::vector<DetectionPtr> low_score_detections;
   for (const auto &detection : input_detections) {
-    if (detection->get_score() >= track_thresh_)
+    if (detection->score() >= track_thresh_)
       detections.push_back(detection);
     else
       low_score_detections.push_back(detection);
@@ -213,8 +213,8 @@ BYTETracker::remove_duplicate_tracks(
   for (size_t i = 0; i < ious.size(); i++) ious[i].resize(b_tracks.size());
   for (size_t ai = 0; ai < a_tracks.size(); ai++) {
     for (size_t bi = 0; bi < b_tracks.size(); bi++) {
-      ious[ai][bi] = 1 - calc_iou(b_tracks[bi]->get_detection().get_rect(),
-                                  a_tracks[ai]->get_detection().get_rect());
+      ious[ai][bi] = 1 - calc_iou(b_tracks[bi]->get_detection().rect(),
+                                  a_tracks[ai]->get_detection().rect());
     }
   }
 
@@ -261,9 +261,8 @@ BYTETracker::linear_assignment(const std::vector<TrackPtr> &tracks,
     cost_matrix[i].resize(detections.size());
   for (size_t bi = 0; bi < detections.size(); bi++) {
     for (size_t ai = 0; ai < tracks.size(); ai++) {
-      cost_matrix[ai][bi] =
-          1 - calc_iou(detections[bi]->get_rect(),
-                       tracks[ai]->get_detection().get_rect());
+      cost_matrix[ai][bi] = 1 - calc_iou(detections[bi]->rect(),
+                                         tracks[ai]->get_detection().rect());
     }
   }
 

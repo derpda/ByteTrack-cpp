@@ -7,9 +7,9 @@
 namespace byte_track {
 using Xyah = Eigen::Matrix<float, 1, 4, Eigen::RowMajor>;
 
-class Rect {
+class RectBase {
  public:
-  virtual ~Rect() = default;
+  virtual ~RectBase() = default;
 
   virtual float top() const = 0;
   virtual float left() const = 0;
@@ -21,14 +21,14 @@ class Rect {
   virtual void set_width(float width) = 0;
   virtual void set_height(float height) = 0;
 
-  Xyah get_xyah() const;
+  Xyah xyah() const;
 
   void set_from_xyah(const Xyah& xyah);
 };
 
-float calc_iou(const Rect& A, const Rect& B);
+float calc_iou(const RectBase& A, const RectBase& B);
 
-class TlwhRect : public Rect {
+class TlwhRect : public RectBase {
   float top_;
   float left_;
   float width_;

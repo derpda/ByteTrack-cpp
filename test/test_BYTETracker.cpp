@@ -14,19 +14,6 @@
 
 namespace {
 
-class DetectionImpl : public byte_track::Detection {
-  byte_track::TlwhRect rect_;
-  float score_ = 0;
-
- public:
-  DetectionImpl(const byte_track::TlwhRect &rect, float score)
-      : rect_(rect), score_(score) {}
-
-  const byte_track::TlwhRect &get_rect() const override { return rect_; }
-
-  const float &get_score() const override { return score_; }
-};
-
 constexpr double EPS = 1e-2;
 
 const std::string D_RESULTS_FILE = "detection_results.json";
@@ -62,11 +49,12 @@ std::map<size_t, std::vector<byte_track::DetectionPtr>> get_inputs_ref(
 
     decltype(inputs_ref)::iterator itr = inputs_ref.find(frame_id);
     if (itr != inputs_ref.end()) {
-      itr->second.emplace_back(std::make_shared<DetectionImpl>(
+      itr->second.emplace_back(std::make_shared<byte_track::Detection>(
           byte_track::TlwhRect(top, left, width, height), prob));
     } else {
-      std::vector<byte_track::DetectionPtr> v{std::make_shared<DetectionImpl>(
-          byte_track::TlwhRect(top, left, width, height), prob)};
+      std::vector<byte_track::DetectionPtr> v{
+          std::make_shared<byte_track::Detection>(
+              byte_track::TlwhRect(top, left, width, height), prob)};
       inputs_ref.emplace_hint(inputs_ref.end(), frame_id, v);
     }
   }
@@ -139,7 +127,7 @@ TEST(ByteTrack, BYTETracker) {
       // impl
       EXPECT_EQ(outputs.size(), outputs_ref[frame_id].size());
       for (const auto &outputs_per_frame : outputs) {
-        const auto &rect = outputs_per_frame->get_detection().get_rect();
+        const auto &rect = outputs_per_frame->get_detection().rect();
         const auto &track_id = outputs_per_frame->get_track_id();
         const auto &ref = outputs_ref[frame_id][track_id];
         EXPECT_NEAR(ref.top(), rect.top(), EPS);

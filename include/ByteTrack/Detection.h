@@ -5,17 +5,32 @@
 
 namespace byte_track {
 
-class Detection;
-using DetectionPtr = std::shared_ptr<Detection>;
+class DetectionBase;
+using DetectionPtr = std::shared_ptr<DetectionBase>;
 
-class Detection {
+class DetectionBase {
  public:
-  virtual ~Detection() = default;
+  virtual ~DetectionBase() = default;
 
-  virtual const Rect& get_rect() const = 0;
-  virtual const float& get_score() const = 0;
+  virtual const RectBase &rect() const = 0;
+  virtual float score() const = 0;
 
-  virtual Rect& get_rect();
-  virtual float& get_score();
+  virtual RectBase &rect() = 0;
+  virtual void set_score(float score) = 0;
 };
+
+class Detection : public DetectionBase {
+  TlwhRect rect_;
+  float score_ = 0;
+
+ public:
+  Detection(const TlwhRect &rect, float score);
+
+  const TlwhRect &rect() const override;
+  float score() const override;
+
+  TlwhRect &rect() override;
+  void set_score(float score) override;
+};
+
 }  // namespace byte_track

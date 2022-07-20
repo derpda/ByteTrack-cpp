@@ -4,12 +4,13 @@
 
 namespace byte_track {
 
-Rect& Detection::get_rect() {
-  return const_cast<Rect&>(const_cast<const Detection*>(this)->get_rect());
-}
+Detection::Detection(const TlwhRect &rect, float score)
+    : rect_(rect), score_(score) {}
 
-float& Detection::get_score() {
-  return const_cast<float&>(const_cast<const Detection*>(this)->get_score());
-}
+const TlwhRect &Detection::rect() const { return rect_; }
+float Detection::score() const { return score_; }
+
+TlwhRect &Detection::rect() { return rect_; }
+void Detection::set_score(float score) { score_ = score; }
 
 }  // namespace byte_track
