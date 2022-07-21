@@ -56,7 +56,7 @@ void KalmanFilter::predict(bool mean_eight_to_zero) {
 
   mean_ = motion_mat_ * mean_.transpose();
   covariance_ =
-      motion_mat_ * covariance_ * (motion_mat_.transpose()) + motion_cov;
+      motion_mat_ * covariance_ * motion_mat_.transpose() + motion_cov;
 }
 
 TlwhRect KalmanFilter::update(const RectBase &measurement) {
@@ -65,16 +65,16 @@ TlwhRect KalmanFilter::update(const RectBase &measurement) {
   project(projected_mean, projected_cov);
 
   Eigen::Matrix<float, 4, 8> B =
-      (covariance_ * (update_mat_.transpose())).transpose();
+      (covariance_ * update_mat_.transpose()).transpose();
   Eigen::Matrix<float, 8, 4> kalman_gain =
       (projected_cov.llt().solve(B)).transpose();
   Eigen::Matrix<float, 1, 4> innovation =
       rect_to_xyah(measurement) - projected_mean;
 
-  const auto tmp = innovation * (kalman_gain.transpose());
+  const auto tmp = innovation * kalman_gain.transpose();
   mean_ = (mean_.array() + tmp.array()).matrix();
   covariance_ =
-      covariance_ - kalman_gain * projected_cov * (kalman_gain.transpose());
+      covariance_ - kalman_gain * projected_cov * kalman_gain.transpose();
   return xyah_to_tlwh(mean_.block<1, 4>(0, 0));
 }
 
@@ -85,7 +85,7 @@ void KalmanFilter::project(Matrix<1, 4> &projected_mean,
                    std_weight_position_ * mean_(3)};
 
   projected_mean = update_mat_ * mean_.transpose();
-  projected_covariance = update_mat_ * covariance_ * (update_mat_.transpose());
+  projected_covariance = update_mat_ * covariance_ * update_mat_.transpose();
 
   Eigen::Matrix<float, 4, 4> diag = std.asDiagonal();
   projected_covariance += diag.array().square().matrix();
