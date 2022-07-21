@@ -10,15 +10,9 @@ namespace byte_track {
 KalmanFilter::KalmanFilter(float std_weight_position, float std_weight_velocity)
     : std_weight_position_(std_weight_position),
       std_weight_velocity_(std_weight_velocity) {
-  constexpr size_t ndim = 4;
-  constexpr float dt = 1;
-
   motion_mat_ = Eigen::MatrixXf::Identity(8, 8);
+  motion_mat_.block<4, 4>(0, 4) = Eigen::Matrix4f::Identity();
   update_mat_ = Eigen::MatrixXf::Identity(4, 8);
-
-  for (size_t i = 0; i < ndim; i++) {
-    motion_mat_(i, ndim + i) = dt;
-  }
 }
 
 void KalmanFilter::initiate(const RectBase &measurement) {
