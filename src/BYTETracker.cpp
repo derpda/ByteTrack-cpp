@@ -96,6 +96,14 @@ std::vector<TrackPtr> BYTETracker::update(
   return output_tracks;
 }
 
+void BYTETracker::clear() {
+  tracked_tracks_.clear();
+  lost_tracks_.clear();
+  removed_tracks_.clear();
+  frame_id_ = 0;
+  track_id_count_ = 0;
+}
+
 std::tuple<std::vector<TrackPtr>, std::vector<TrackPtr>,
            std::vector<DetectionPtr>>
 BYTETracker::iou_association(const std::vector<TrackPtr> &track_pool,

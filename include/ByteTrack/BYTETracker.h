@@ -20,6 +20,8 @@ class BYTETracker {
 
   std::vector<TrackPtr> update(const std::vector<DetectionPtr> &objects);
 
+  void clear();
+
  private:
   std::tuple<std::vector<TrackPtr>, std::vector<TrackPtr>,
              std::vector<DetectionPtr>>
