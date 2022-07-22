@@ -59,10 +59,10 @@ class BYTETracker {
       bool return_cost = true) const;
 
  private:
-  float track_thresh_;
-  float high_thresh_;
-  float match_thresh_;
-  size_t max_time_lost_;
+  const float track_thresh_;
+  const float high_thresh_;
+  const float match_thresh_;
+  const size_t max_time_lost_;
 
   size_t frame_id_;
   size_t track_id_count_;
