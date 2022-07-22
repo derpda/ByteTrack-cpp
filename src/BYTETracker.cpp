@@ -26,6 +26,76 @@ BYTETracker::BYTETracker(int frame_rate, int track_buffer, float track_thresh,
       frame_id_(0),
       track_id_count_(0) {}
 
+std::vector<TrackPtr> BYTETracker::update(
+    const std::vector<DetectionPtr> &input_detections) {
+  frame_id_++;
+
+  ////////// Step 1: Get detections                                   //////////
+
+  // Sort new tracks from detection by score
+  std::vector<DetectionPtr> detections;
+  std::vector<DetectionPtr> low_score_detections;
+  for (const auto &detection : input_detections) {
+    if (detection->score() >= track_thresh_)
+      detections.push_back(detection);
+    else
+      low_score_detections.push_back(detection);
+  }
+
+  // Sort existing tracks by confirmed status
+  std::vector<TrackPtr> confirmed_tracks;
+  std::vector<TrackPtr> unconfirmed_tracks;
+
+  for (const auto &track : tracked_tracks_) {
+    if (!track->is_confirmed())
+      unconfirmed_tracks.push_back(track);
+    else
+      confirmed_tracks.push_back(track);
+  }
+
+  std::vector<TrackPtr> track_pool;
+  track_pool = joint_tracks(confirmed_tracks, lost_tracks_);
+
+  // Predict current pose by KF
+  for (auto &track : track_pool) track->predict();
+
+  ////////// Step 2: Find matches between tracks and detections       //////////
+  ////////// Step 2: First association, with IoU                      //////////
+  auto [matched_tracks, unmatched_tracked_tracks, unmatched_detections] =
+      iou_association(track_pool, detections);
+
+  ////////// Step 3: Second association, using low score dets         //////////
+  auto new_lost_tracks = low_score_association(
+      matched_tracks, low_score_detections, unmatched_tracked_tracks);
+
+  ////////// Step 4: Init new tracks                                  //////////
+  auto new_removed_tracks =
+      init_new_tracks(matched_tracks, unconfirmed_tracks, unmatched_detections);
+
+  ////////// Step 5: Update state                                     //////////
+  for (auto &lost_track : lost_tracks_) {
+    if (frame_id_ - lost_track->get_frame_id() > max_time_lost_) {
+      lost_track->mark_as_removed();
+      new_removed_tracks.push_back(lost_track);
+    }
+  }
+
+  lost_tracks_ = sub_tracks(
+      joint_tracks(sub_tracks(lost_tracks_, matched_tracks), new_lost_tracks),
+      removed_tracks_);
+  removed_tracks_ = joint_tracks(removed_tracks_, new_removed_tracks);
+
+  std::tie(tracked_tracks_, lost_tracks_) =
+      remove_duplicate_tracks(matched_tracks, lost_tracks_);
+
+  std::vector<TrackPtr> output_tracks;
+  for (const auto &track : tracked_tracks_) {
+    if (track->is_confirmed()) output_tracks.push_back(track);
+  }
+
+  return output_tracks;
+}
+
 std::tuple<std::vector<TrackPtr>, std::vector<TrackPtr>,
            std::vector<DetectionPtr>>
 BYTETracker::iou_association(const std::vector<TrackPtr> &track_pool,
@@ -103,76 +173,6 @@ std::vector<TrackPtr> BYTETracker::init_new_tracks(
     matched_tracks.push_back(new_track);
   }
   return new_removed_tracks;
-}
-
-std::vector<TrackPtr> BYTETracker::update(
-    const std::vector<DetectionPtr> &input_detections) {
-  frame_id_++;
-
-  ////////// Step 1: Get detections                                   //////////
-
-  // Sort new tracks from detection by score
-  std::vector<DetectionPtr> detections;
-  std::vector<DetectionPtr> low_score_detections;
-  for (const auto &detection : input_detections) {
-    if (detection->score() >= track_thresh_)
-      detections.push_back(detection);
-    else
-      low_score_detections.push_back(detection);
-  }
-
-  // Sort existing tracks by confirmed status
-  std::vector<TrackPtr> confirmed_tracks;
-  std::vector<TrackPtr> unconfirmed_tracks;
-
-  for (const auto &track : tracked_tracks_) {
-    if (!track->is_confirmed())
-      unconfirmed_tracks.push_back(track);
-    else
-      confirmed_tracks.push_back(track);
-  }
-
-  std::vector<TrackPtr> track_pool;
-  track_pool = joint_tracks(confirmed_tracks, lost_tracks_);
-
-  // Predict current pose by KF
-  for (auto &track : track_pool) track->predict();
-
-  ////////// Step 2: Find matches between tracks and detections       //////////
-  ////////// Step 2: First association, with IoU                      //////////
-  auto [matched_tracks, unmatched_tracked_tracks, unmatched_detections] =
-      iou_association(track_pool, detections);
-
-  ////////// Step 3: Second association, using low score dets         //////////
-  auto new_lost_tracks = low_score_association(
-      matched_tracks, low_score_detections, unmatched_tracked_tracks);
-
-  ////////// Step 4: Init new tracks                                  //////////
-  auto new_removed_tracks =
-      init_new_tracks(matched_tracks, unconfirmed_tracks, unmatched_detections);
-
-  ////////// Step 5: Update state                                     //////////
-  for (auto &lost_track : lost_tracks_) {
-    if (frame_id_ - lost_track->get_frame_id() > max_time_lost_) {
-      lost_track->mark_as_removed();
-      new_removed_tracks.push_back(lost_track);
-    }
-  }
-
-  lost_tracks_ = sub_tracks(
-      joint_tracks(sub_tracks(lost_tracks_, matched_tracks), new_lost_tracks),
-      removed_tracks_);
-  removed_tracks_ = joint_tracks(removed_tracks_, new_removed_tracks);
-
-  std::tie(tracked_tracks_, lost_tracks_) =
-      remove_duplicate_tracks(matched_tracks, lost_tracks_);
-
-  std::vector<TrackPtr> output_tracks;
-  for (const auto &track : tracked_tracks_) {
-    if (track->is_confirmed()) output_tracks.push_back(track);
-  }
-
-  return output_tracks;
 }
 
 std::vector<TrackPtr> BYTETracker::joint_tracks(
