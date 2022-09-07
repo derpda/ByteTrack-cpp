@@ -25,6 +25,7 @@ set(EIGEN_VERSION 3.3)
 find_package(Eigen3 ${EIGEN_VERSION} QUIET)
 if(NOT EIGEN3_FOUND)
   set(BUILD_TESTING OFF CACHE INTERNAL "")
+  include(FetchContent)
   FetchContent_Declare(eigen
     GIT_REPOSITORY  https://gitlab.com/libeigen/eigen.git
     GIT_TAG         ${EIGEN_VERSION}
