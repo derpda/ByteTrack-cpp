@@ -5,15 +5,15 @@
 namespace byte_track {
 
 float calc_iou(const RectBase& A, const RectBase& B) {
-  const float box_area = (B.width() + 1) * (B.height() + 1);
   const float iw = std::min(A.left() + A.width(), B.left() + B.width()) -
-                   std::max(A.left(), B.left()) + 1;
+                   std::max(A.left(), B.left());
   float iou = 0;
   if (iw > 0) {
     const float ih = std::min(A.top() + A.height(), B.top() + B.height()) -
-                     std::max(A.top(), B.top()) + 1;
+                     std::max(A.top(), B.top());
     if (ih > 0) {
-      const float ua = (A.width() + 1) * (A.height() + 1) + box_area - iw * ih;
+      const float ua =
+          A.width() * A.height() + B.width() * B.height() - iw * ih;
       iou = iw * ih / ua;
     }
   }
