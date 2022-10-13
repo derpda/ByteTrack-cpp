@@ -54,8 +54,15 @@ if(BUILD_BYTETRACK_TEST)
 
   find_package(GTest QUIET)
   if(NOT GTest_FOUND)
-    message(FATAL_ERROR "GTest not found.")
+    include(FetchContent)
+    FetchContent_Declare(googletest
+      GIT_REPOSITORY  https://github.com/google/googletest.git
+      GIT_TAG         v1.12.0
+      GIT_SHALLOW     ON)
+    FetchContent_MakeAvailable(googletest)
   endif()
+
+  find_package(Boost REQUIRED)
 
   add_executable(${PROJECT_NAME}_test
     ${CMAKE_CURRENT_SOURCE_DIR}/test/test_BYTETracker.cpp
@@ -63,8 +70,8 @@ if(BUILD_BYTETRACK_TEST)
 
   target_link_libraries(${PROJECT_NAME}_test
     ${PROJECT_NAME}
-    GTest::GTest
-    GTest::Main
+    Boost::boost
+    GTest::gtest_main
     )
 
   gtest_discover_tests(${PROJECT_NAME}_test
