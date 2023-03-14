@@ -8,6 +8,7 @@ namespace byte_track {
 
 Track::Track(DetectionPtr detection, size_t start_frame_id, size_t track_id)
     : detection(detection),
+      predictedRect(detection->rect()),
       kalman_filter_(),
       state_(TrackState::Tracked),
       // Detections registered on first frame are considered as confirmed
@@ -34,8 +35,9 @@ size_t Track::get_tracklet_length() const { return tracklet_len_; }
 void Track::predict() { kalman_filter_.predict(state_ != TrackState::Tracked); }
 
 void Track::update(const DetectionPtr& matched_detection, size_t frame_id) {
-  detection->set_rect(kalman_filter_.update(matched_detection->rect()));
+  detection->set_rect(matched_detection->rect());
   detection->set_score(matched_detection->score());
+  predictedRect = kalman_filter_.update(matched_detection->rect());
 
   // If the track was actively tracked, just increment the tracklet length
   // Otherwise, mark the track as tracked again and reset the tracklet length

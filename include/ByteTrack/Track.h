@@ -22,6 +22,7 @@ enum class TrackState {
 class Track {
  public:
   DetectionPtr detection;
+  TlwhRect predictedRect;
 
   Track() = delete;
   Track(DetectionPtr detection, size_t start_frame_id, size_t track_id);

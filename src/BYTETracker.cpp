@@ -221,8 +221,8 @@ BYTETracker::remove_duplicate_tracks(
   for (size_t i = 0; i < ious.size(); i++) ious[i].resize(b_tracks.size());
   for (size_t ai = 0; ai < a_tracks.size(); ai++) {
     for (size_t bi = 0; bi < b_tracks.size(); bi++) {
-      ious[ai][bi] = 1 - calc_iou(b_tracks[bi]->detection->rect(),
-                                  a_tracks[ai]->detection->rect());
+      ious[ai][bi] = 1 - calc_iou(b_tracks[bi]->predictedRect,
+                                  a_tracks[ai]->predictedRect);
     }
   }
 
@@ -270,7 +270,7 @@ BYTETracker::linear_assignment(const std::vector<TrackPtr> &tracks,
   for (size_t bi = 0; bi < detections.size(); bi++) {
     for (size_t ai = 0; ai < tracks.size(); ai++) {
       cost_matrix[ai][bi] =
-          1 - calc_iou(detections[bi]->rect(), tracks[ai]->detection->rect());
+          1 - calc_iou(detections[bi]->rect(), tracks[ai]->predictedRect);
     }
   }
 

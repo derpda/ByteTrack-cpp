@@ -23,6 +23,12 @@ float calc_iou(const RectBase& A, const RectBase& B) {
 TlwhRect::TlwhRect(float top, float left, float width, float height)
     : top_(top), left_(left), width_(width), height_(height) {}
 
+TlwhRect::TlwhRect(const RectBase& other)
+    : top_(other.top()),
+      left_(other.left()),
+      width_(other.width()),
+      height_(other.height()) {}
+
 float TlwhRect::top() const { return top_; }
 float TlwhRect::left() const { return left_; }
 float TlwhRect::width() const { return width_; }

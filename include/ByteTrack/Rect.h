@@ -24,6 +24,7 @@ class TlwhRect : public RectBase {
 
  public:
   TlwhRect(float top = 0, float left = 0, float width = 0, float height = 0);
+  TlwhRect(const RectBase& other);
 
   virtual float top() const override;
   virtual float left() const override;
