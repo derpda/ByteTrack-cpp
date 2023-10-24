@@ -34,9 +34,4 @@ float TlwhRect::left() const { return left_; }
 float TlwhRect::width() const { return width_; }
 float TlwhRect::height() const { return height_; }
 
-float& TlwhRect::top() { return top_; }
-float& TlwhRect::left() { return left_; }
-float& TlwhRect::width() { return width_; }
-float& TlwhRect::height() { return height_; }
-
 }  // namespace byte_track

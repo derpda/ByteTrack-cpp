@@ -30,11 +30,6 @@ class TlwhRect : public RectBase {
   virtual float left() const override;
   virtual float width() const override;
   virtual float height() const override;
-
-  float& top();
-  float& left();
-  float& width();
-  float& height();
 };
 
 }  // namespace byte_track
