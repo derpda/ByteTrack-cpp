@@ -34,7 +34,7 @@ if(NOT EIGEN3_FOUND)
   unset(BUILD_TESTING CACHE)
 endif()
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME} STATIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src/BYTETracker.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/Detection.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/KalmanFilter.cpp
