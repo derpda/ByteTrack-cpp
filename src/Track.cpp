@@ -32,7 +32,9 @@ size_t Track::get_start_frame_id() const { return start_frame_id_; }
 
 size_t Track::get_tracklet_length() const { return tracklet_len_; }
 
-void Track::predict() { kalman_filter_.predict(state_ != TrackState::Tracked); }
+void Track::predict() {
+  predictedRect = kalman_filter_.predict(state_ != TrackState::Tracked);
+}
 
 void Track::update(const DetectionPtr& matched_detection, size_t frame_id) {
   detection->set_rect(matched_detection->rect());

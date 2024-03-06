@@ -33,7 +33,7 @@ void KalmanFilter::initiate(const RectBase &measurement) {
   covariance_ = tmp.asDiagonal();
 }
 
-void KalmanFilter::predict(bool mean_eight_to_zero) {
+TlwhRect KalmanFilter::predict(bool mean_eight_to_zero) {
   if (mean_eight_to_zero) mean_[7] = 0;
   Matrix<1, 8> std;
   std(0) = std_weight_position_ * mean_(3);
@@ -51,6 +51,7 @@ void KalmanFilter::predict(bool mean_eight_to_zero) {
   mean_ = motion_mat_ * mean_.transpose();
   covariance_ =
       motion_mat_ * covariance_ * motion_mat_.transpose() + motion_cov;
+  return xyah_to_tlwh(mean_.block<1, 4>(0, 0));
 }
 
 TlwhRect KalmanFilter::update(const RectBase &measurement) {

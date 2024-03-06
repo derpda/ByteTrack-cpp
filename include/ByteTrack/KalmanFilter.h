@@ -15,7 +15,7 @@ class KalmanFilter {
 
   void initiate(const RectBase& measurement);
 
-  void predict(bool mean_eight_to_zero);
+  TlwhRect predict(bool mean_eight_to_zero);
 
   TlwhRect update(const RectBase& measurement);
 
