@@ -2,11 +2,16 @@
 	"name": "ByteTrack dev container",
     "image": "byte_track_dev:0.1",
 	"remoteUser": "vscode",
-    "extensions": [
-		"github.copilot",
-		"llvm-vs-code-extensions.vscode-clangd",
-		"ms-vscode.cmake-tools",
-		"twxs.cmake",
-		"xaver.clang-format"
-	]
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "eamodio.gitlens",
+                "github.copilot",
+                "llvm-vs-code-extensions.vscode-clangd",
+                "ms-vscode.cmake-tools",
+                "twxs.cmake",
+                "xaver.clang-format"
+            ]
+        }
+    }
 }

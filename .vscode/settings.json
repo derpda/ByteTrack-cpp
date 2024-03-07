@@ -1,0 +1,4 @@
+{
+    "cmake.configureArgs": ["-DBUILD_BYTETRACK_TEST=ON"],
+    "cmake.buildToolArgs": ["-j", "8"],
+}
