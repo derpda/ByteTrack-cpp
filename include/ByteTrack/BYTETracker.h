@@ -56,7 +56,8 @@ class BYTETracker {
                     float thresh) const;
 
   std::tuple<std::vector<int>, std::vector<int>, double> exec_lapjv(
-      const std::vector<std::vector<float>> &cost, bool extend_cost = false,
+      std::vector<float> &&cost, size_t n_rows, size_t n_cols,
+      bool extend_cost = false,
       float cost_limit = std::numeric_limits<float>::max(),
       bool return_cost = true) const;
 

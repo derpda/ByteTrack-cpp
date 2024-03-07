@@ -263,14 +263,13 @@ BYTETracker::linear_assignment(const std::vector<TrackPtr> &tracks,
                                float thresh) const {
   if (tracks.empty() || detections.empty()) return {{}, tracks, detections};
 
-  std::vector<std::vector<float>> cost_matrix;
-  cost_matrix.resize(tracks.size());
-  for (size_t i = 0; i < cost_matrix.size(); i++)
-    cost_matrix[i].resize(detections.size());
-  for (size_t bi = 0; bi < detections.size(); bi++) {
-    for (size_t ai = 0; ai < tracks.size(); ai++) {
-      cost_matrix[ai][bi] =
-          1 - calc_iou(detections[bi]->rect(), tracks[ai]->predictedRect);
+  size_t n_rows = tracks.size();
+  size_t n_cols = detections.size();
+  std::vector<float> cost_matrix(n_rows * n_cols);
+  for (size_t i = 0; i < n_rows; i++) {
+    for (size_t j = 0; j < n_cols; j++) {
+      cost_matrix[i * n_cols + j] =
+          1 - calc_iou(detections[j]->rect(), tracks[i]->predictedRect);
     }
   }
 
@@ -278,7 +277,8 @@ BYTETracker::linear_assignment(const std::vector<TrackPtr> &tracks,
   std::vector<TrackPtr> a_unmatched;
   std::vector<DetectionPtr> b_unmatched;
 
-  auto [rowsol, colsol, _] = exec_lapjv(cost_matrix, true, thresh);
+  auto [rowsol, colsol, _] =
+      exec_lapjv(std::move(cost_matrix), n_rows, n_cols, true, thresh);
   for (size_t i = 0; i < rowsol.size(); i++) {
     if (rowsol[i] >= 0)
       matches.push_back({tracks[i], detections[rowsol[i]]});
@@ -293,10 +293,8 @@ BYTETracker::linear_assignment(const std::vector<TrackPtr> &tracks,
 }
 
 std::tuple<std::vector<int>, std::vector<int>, double> BYTETracker::exec_lapjv(
-    const std::vector<std::vector<float>> &cost, bool extend_cost,
+    std::vector<float> &&cost, size_t n_rows, size_t n_cols, bool extend_cost,
     float cost_limit, bool return_cost) const {
-  int n_rows = cost.size();
-  int n_cols = cost[0].size();
   std::vector<int> rowsol(n_rows);
   std::vector<int> colsol(n_cols);
 
@@ -309,37 +307,27 @@ std::tuple<std::vector<int>, std::vector<int>, double> BYTETracker::exec_lapjv(
   if (extend_cost || cost_limit < std::numeric_limits<float>::max()) {
     n = n_rows + n_cols;
     cost_c.resize(n * n);
-
     if (cost_limit < std::numeric_limits<float>::max()) {
       cost_c.assign(cost_c.size(), cost_limit / 2.0);
     } else {
-      float cost_max = -1;
-      for (size_t i = 0; i < cost.size(); i++) {
-        for (size_t j = 0; j < cost[i].size(); j++) {
-          if (cost[i][j] > cost_max) cost_max = cost[i][j];
-        }
-      }
-      cost_c.assign(cost_c.size(), cost_max + 1);
+      cost_c.assign(cost_c.size(),
+                    *std::max_element(cost.begin(), cost.end()) + 1);
     }
-
+    // Assign cost to top-left corner
+    for (int i = 0; i < n_rows; i++) {
+      for (int j = 0; j < n_cols; j++) {
+        cost_c[i * n + j] = cost[i * n_cols + j];
+      }
+    }
+    // Set bottom-right corner to 0
     for (int i = n_rows; i < n; i++) {
       for (int j = n_cols; j < n; j++) {
         cost_c[i * n + j] = 0;
       }
     }
-    for (int i = 0; i < n_rows; i++) {
-      for (int j = 0; j < n_cols; j++) {
-        cost_c[i * n + j] = cost[i][j];
-      }
-    }
   } else {
     n = n_rows;
-    cost_c.resize(n_rows * n_cols);
-    for (int i = 0; i < n_rows; i++) {
-      for (int j = 0; j < n_cols; j++) {
-        cost_c[i * n_cols + j] = cost[i][j];
-      }
-    }
+    cost_c = std::move(cost);
   }
 
   std::vector<int> x_c(n), y_c(n);
