@@ -302,7 +302,7 @@ std::tuple<std::vector<int>, std::vector<int>, double> BYTETracker::exec_lapjv(
     throw std::runtime_error("The `extend_cost` variable should set True");
   }
 
-  int n = 0;
+  size_t n = 0;
   std::vector<float> cost_c;
   if (extend_cost || cost_limit < std::numeric_limits<float>::max()) {
     n = n_rows + n_cols;
@@ -314,14 +314,14 @@ std::tuple<std::vector<int>, std::vector<int>, double> BYTETracker::exec_lapjv(
                     *std::max_element(cost.begin(), cost.end()) + 1);
     }
     // Assign cost to top-left corner
-    for (int i = 0; i < n_rows; i++) {
-      for (int j = 0; j < n_cols; j++) {
+    for (size_t i = 0; i < n_rows; i++) {
+      for (size_t j = 0; j < n_cols; j++) {
         cost_c[i * n + j] = cost[i * n_cols + j];
       }
     }
     // Set bottom-right corner to 0
-    for (int i = n_rows; i < n; i++) {
-      for (int j = n_cols; j < n; j++) {
+    for (size_t i = n_rows; i < n; i++) {
+      for (size_t j = n_cols; j < n; j++) {
         cost_c[i * n + j] = 0;
       }
     }
@@ -340,14 +340,14 @@ std::tuple<std::vector<int>, std::vector<int>, double> BYTETracker::exec_lapjv(
   double opt = 0.0;
 
   if (n != n_rows) {
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
       if (x_c[i] >= n_cols) x_c[i] = -1;
       if (y_c[i] >= n_rows) y_c[i] = -1;
     }
-    for (int i = 0; i < n_rows; i++) {
+    for (size_t i = 0; i < n_rows; i++) {
       rowsol[i] = x_c[i];
     }
-    for (int i = 0; i < n_cols; i++) {
+    for (size_t i = 0; i < n_cols; i++) {
       colsol[i] = y_c[i];
     }
 
