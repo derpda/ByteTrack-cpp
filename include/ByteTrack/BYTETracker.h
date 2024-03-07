@@ -72,6 +72,5 @@ class BYTETracker {
 
   std::vector<TrackPtr> tracked_tracks_;
   std::vector<TrackPtr> lost_tracks_;
-  std::vector<TrackPtr> removed_tracks_;
 };
 }  // namespace byte_track

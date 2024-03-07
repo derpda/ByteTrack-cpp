@@ -16,7 +16,6 @@ using TrackPtr = std::shared_ptr<Track>;
 enum class TrackState {
   Tracked = 0,
   Lost = 1,
-  Removed = 2,
 };
 
 class Track {
@@ -38,7 +37,7 @@ class Track {
   void update(const DetectionPtr& new_track, size_t frame_id);
 
   void mark_as_lost();
-  void mark_as_removed();
+  void mark_as_confirmed();
 
  private:
   KalmanFilter kalman_filter_;

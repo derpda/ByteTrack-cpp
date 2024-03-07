@@ -55,6 +55,6 @@ void Track::update(const DetectionPtr& matched_detection, size_t frame_id) {
 
 void Track::mark_as_lost() { state_ = TrackState::Lost; }
 
-void Track::mark_as_removed() { state_ = TrackState::Removed; }
+void Track::mark_as_confirmed() { is_confirmed_ = true; }
 
 }  // namespace byte_track
