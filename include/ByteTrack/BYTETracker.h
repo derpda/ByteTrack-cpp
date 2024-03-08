@@ -2,9 +2,7 @@
 
 #include "ByteTrack/Detection.h"
 #include "ByteTrack/Track.h"
-#include "ByteTrack/lapjv.h"
 
-#include <array>
 #include <cstddef>
 #include <limits>
 #include <tuple>

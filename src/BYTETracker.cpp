@@ -3,6 +3,7 @@
 #include "ByteTrack/Detection.h"
 #include "ByteTrack/Rect.h"
 #include "ByteTrack/Track.h"
+#include "ByteTrack/lapjv.h"
 
 #include <algorithm>
 #include <array>
