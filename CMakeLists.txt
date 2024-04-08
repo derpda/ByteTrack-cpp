@@ -21,7 +21,7 @@ else()
   message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++17 support. Please use a different C++ compiler.")
 endif()
 
-set(EIGEN_VERSION 3.3)
+set(EIGEN_VERSION 3.4)
 find_package(Eigen3 ${EIGEN_VERSION} QUIET)
 if(NOT EIGEN3_FOUND)
   set(BUILD_TESTING OFF CACHE INTERNAL "")
