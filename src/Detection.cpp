@@ -10,7 +10,9 @@ Detection::Detection(const TlwhRect &rect, float score)
 const TlwhRect &Detection::rect() const { return rect_; }
 float Detection::score() const { return score_; }
 
-void Detection::set_rect(const RectBase &rect) { rect_ = TlwhRect(rect); }
-void Detection::set_score(float score) { score_ = score; }
+void Detection::update(const byte_track::DetectionBase &new_det) {
+  rect_ = TlwhRect(new_det.rect());
+  score_ = new_det.score();
+}
 
 }  // namespace byte_track

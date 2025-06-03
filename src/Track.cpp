@@ -37,8 +37,7 @@ void Track::predict() {
 }
 
 void Track::update(const DetectionPtr& matched_detection, size_t frame_id) {
-  detection->set_rect(matched_detection->rect());
-  detection->set_score(matched_detection->score());
+  detection->update(*matched_detection);
   predictedRect = kalman_filter_.update(matched_detection->rect());
 
   // If the track was actively tracked, just increment the tracklet length

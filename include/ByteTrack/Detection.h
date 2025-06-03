@@ -16,8 +16,7 @@ class DetectionBase {
   virtual const RectBase &rect() const = 0;
   virtual float score() const = 0;
 
-  virtual void set_rect(const RectBase &rect) = 0;
-  virtual void set_score(float score) = 0;
+  virtual void update(const byte_track::DetectionBase &new_det) = 0;
 };
 
 class Detection : public DetectionBase {
@@ -30,8 +29,7 @@ class Detection : public DetectionBase {
   const TlwhRect &rect() const override;
   float score() const override;
 
-  void set_rect(const RectBase &rect) override;
-  void set_score(float score) override;
+  void update(const byte_track::DetectionBase &new_det) override;
 };
 
 }  // namespace byte_track
