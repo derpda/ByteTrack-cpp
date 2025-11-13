@@ -6,7 +6,6 @@
 
 #include <cstddef>
 #include <memory>
-#include <type_traits>
 
 namespace byte_track {
 
@@ -15,17 +14,18 @@ enum class TrackState {
   Lost = 1,
 };
 
-template <typename T, typename DetectionType>
-concept UserTrackType = requires(T track, DetectionType&& det) {
-  { track.update(std::move(det)) } -> std::same_as<void>;
-} && std::is_default_constructible_v<T>;
+template <typename T, typename DetType>
+concept UserTrackType = requires(T track, const std::shared_ptr<DetType>& det) {
+  { track.update(det) } -> std::same_as<void>;
+  { T(det) } -> std::same_as<T>;
+};
 
 class DummyUserTrack {
  public:
-  DummyUserTrack() = default;
+  DummyUserTrack() = delete;
+  DummyUserTrack(const std::shared_ptr<Detection>& /*det*/) {}
 
-  template <DetectionType DetType>
-  void update(DetType&& /*det*/) {}
+  void update(const std::shared_ptr<Detection>& /*det*/) {}
 };
 
 template <DetectionType DetType = Detection,
@@ -34,14 +34,20 @@ class Track {
   using DetectionPtr = std::shared_ptr<DetType>;
 
  public:
-  UserTrack user_track;
+  std::shared_ptr<UserTrack> userTrack;
   TlwhRect rect;
   TlwhRect predictedRect;
 
   Track() = delete;
-  Track(TlwhRect initial_rect, size_t start_frame_id, size_t track_id)
-      : user_track(),
-        rect(std::move(initial_rect)),
+  ~Track() = default;
+  Track(const Track&) = delete;
+  Track& operator=(const Track&) = delete;
+  Track(Track&&) = default;
+  Track& operator=(Track&&) = default;
+
+  Track(const DetectionPtr& detection, size_t start_frame_id, size_t track_id)
+      : userTrack(std::make_shared<UserTrack>(detection)),
+        rect(detection->rect()),
         predictedRect(rect),
         kalman_filter_(),
         state_(TrackState::Tracked),
@@ -65,9 +71,9 @@ class Track {
     predictedRect = kalman_filter_.predict(state_ != TrackState::Tracked);
   }
   void update(const DetectionPtr& matched_detection, size_t frame_id) {
-    user_track.update(*matched_detection);
     rect = matched_detection->rect();
     predictedRect = kalman_filter_.update(matched_detection->rect());
+    userTrack->update(matched_detection);
 
     // If the track was actively tracked, just increment the tracklet length
     // Otherwise, mark the track as tracked again and reset the tracklet length

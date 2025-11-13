@@ -17,9 +17,16 @@ class Detection {
   float score_ = 0;
 
  public:
-  Detection(const TlwhRect &rect, float score);
+  Detection() = delete;
+  ~Detection() = default;
+  Detection(const Detection&) = delete;
+  Detection& operator=(const Detection&) = delete;
+  Detection(Detection&&) = default;
+  Detection& operator=(Detection&&) = default;
 
-  const TlwhRect &rect() const;
+  Detection(const TlwhRect& rect, float score);
+
+  const TlwhRect& rect() const;
   float score() const;
 };
 

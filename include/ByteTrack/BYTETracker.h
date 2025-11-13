@@ -177,7 +177,7 @@ class BYTETracker {
       if (detection->score() < track_thresh_) continue;
       track_id_count_++;
       TrackPtr new_track = std::make_shared<Track<DetType, UserTrack>>(
-          detection->rect(), frame_id_, track_id_count_);
+          detection, frame_id_, track_id_count_);
       if (detection->score() >= high_thresh_) {
         new_track->mark_as_confirmed();
       }
