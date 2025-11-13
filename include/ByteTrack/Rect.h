@@ -51,12 +51,7 @@ class TlwhRect {
         height_(other.height()) {}
   template <Rectangle T>
   TlwhRect& operator=(const T& other) {
-    if (this != &other) {
-      top_ = other.top();
-      left_ = other.left();
-      width_ = other.width();
-      height_ = other.height();
-    }
+    *this = TlwhRect(other);
     return *this;
   }
 
