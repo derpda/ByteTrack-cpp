@@ -4,8 +4,6 @@
 
 #include "Eigen/Dense"
 
-#include <cstddef>
-
 namespace byte_track {
 KalmanFilter::KalmanFilter(float std_weight_position, float std_weight_velocity)
     : std_weight_position_(std_weight_position),
@@ -15,7 +13,7 @@ KalmanFilter::KalmanFilter(float std_weight_position, float std_weight_velocity)
   update_mat_ = Eigen::MatrixXf::Identity(4, 8);
 }
 
-void KalmanFilter::initiate(const RectBase &measurement) {
+void KalmanFilter::initiate(const TlwhRect &measurement) {
   mean_.block<1, 4>(0, 0) = rect_to_xyah(measurement);
   mean_.block<1, 4>(0, 4) = Eigen::Vector4f::Zero();
 
@@ -54,7 +52,7 @@ TlwhRect KalmanFilter::predict(bool mean_eight_to_zero) {
   return xyah_to_tlwh(mean_.block<1, 4>(0, 0));
 }
 
-TlwhRect KalmanFilter::update(const RectBase &measurement) {
+TlwhRect KalmanFilter::update(const TlwhRect &measurement) {
   Matrix<1, 4> projected_mean;
   Matrix<4, 4> projected_cov;
   project(projected_mean, projected_cov);
@@ -87,7 +85,7 @@ void KalmanFilter::project(Matrix<1, 4> &projected_mean,
 }
 
 KalmanFilter::Matrix<1, 4> KalmanFilter::rect_to_xyah(
-    const RectBase &rect) const {
+    const TlwhRect &rect) const {
   return Matrix<1, 4>{rect.left() + rect.width() / 2,
                       rect.top() + rect.height() / 2,
                       rect.width() / rect.height(), rect.height()};

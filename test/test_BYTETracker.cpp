@@ -34,9 +34,10 @@ T get_data(const boost::property_tree::ptree &pt, const std::string &key) {
   return ret;
 }
 
-std::map<size_t, std::vector<byte_track::DetectionPtr>> get_inputs_ref(
-    const boost::property_tree::ptree &pt) {
-  std::map<size_t, std::vector<byte_track::DetectionPtr>> inputs_ref;
+std::map<size_t, std::vector<std::shared_ptr<byte_track::Detection>>>
+get_inputs_ref(const boost::property_tree::ptree &pt) {
+  std::map<size_t, std::vector<std::shared_ptr<byte_track::Detection>>>
+      inputs_ref;
   BOOST_FOREACH (const boost::property_tree::ptree::value_type &child,
                  pt.get_child("results")) {
     const boost::property_tree::ptree &result = child.second;
@@ -52,7 +53,7 @@ std::map<size_t, std::vector<byte_track::DetectionPtr>> get_inputs_ref(
       itr->second.emplace_back(std::make_shared<byte_track::Detection>(
           byte_track::TlwhRect(top, left, width, height), prob));
     } else {
-      std::vector<byte_track::DetectionPtr> v{
+      std::vector<std::shared_ptr<byte_track::Detection>> v{
           std::make_shared<byte_track::Detection>(
               byte_track::TlwhRect(top, left, width, height), prob)};
       inputs_ref.emplace_hint(inputs_ref.end(), frame_id, v);
@@ -127,7 +128,7 @@ TEST(ByteTrack, BYTETracker) {
       // impl
       EXPECT_EQ(outputs.size(), outputs_ref[frame_id].size());
       for (const auto &outputs_per_frame : outputs) {
-        const auto &rect = outputs_per_frame->detection->rect();
+        const auto &rect = outputs_per_frame->rect;
         const auto &track_id = outputs_per_frame->get_track_id();
         const auto &ref = outputs_ref[frame_id][track_id];
         EXPECT_NEAR(ref.top(), rect.top(), EPS);

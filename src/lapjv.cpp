@@ -1,7 +1,9 @@
 #include "ByteTrack/lapjv.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstring>
+#include <limits>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -277,8 +279,8 @@ int _ca_dense(const size_t n, const std::vector<float> &cost,
 }  // namespace
 
 /** Solve dense sparse LAP. */
-int byte_track::lapjv_internal(const size_t n, const std::vector<float> &cost,
-                               std::vector<int> &x, std::vector<int> &y) {
+int lapjv_internal(const size_t n, const std::vector<float> &cost,
+                   std::vector<int> &x, std::vector<int> &y) {
   int ret;
   std::vector<int> free_rows(n);
   std::vector<double> v(n);
@@ -292,4 +294,79 @@ int byte_track::lapjv_internal(const size_t n, const std::vector<float> &cost,
     ret = _ca_dense(n, cost, ret, free_rows, x, y, v);
   }
   return ret;
+}
+
+std::tuple<std::vector<int>, std::vector<int>, double> byte_track::exec_lapjv(
+    std::vector<float> &&cost, size_t n_rows, size_t n_cols, bool extend_cost,
+    float cost_limit, bool return_cost) {
+  std::vector<int> rowsol(n_rows);
+  std::vector<int> colsol(n_cols);
+
+  if (n_rows != n_cols && !extend_cost) {
+    throw std::runtime_error("The `extend_cost` variable should set True");
+  }
+
+  size_t n = 0;
+  std::vector<float> cost_c;
+  if (extend_cost || cost_limit < std::numeric_limits<float>::max()) {
+    n = n_rows + n_cols;
+    cost_c.resize(n * n);
+    if (cost_limit < std::numeric_limits<float>::max()) {
+      cost_c.assign(cost_c.size(), cost_limit / 2.0);
+    } else {
+      cost_c.assign(cost_c.size(),
+                    *std::max_element(cost.begin(), cost.end()) + 1);
+    }
+    // Assign cost to top-left corner
+    for (size_t i = 0; i < n_rows; i++) {
+      for (size_t j = 0; j < n_cols; j++) {
+        cost_c[i * n + j] = cost[i * n_cols + j];
+      }
+    }
+    // Set bottom-right corner to 0
+    for (size_t i = n_rows; i < n; i++) {
+      for (size_t j = n_cols; j < n; j++) {
+        cost_c[i * n + j] = 0;
+      }
+    }
+  } else {
+    n = n_rows;
+    cost_c = std::move(cost);
+  }
+
+  std::vector<int> x_c(n), y_c(n);
+
+  int ret = lapjv_internal(n, cost_c, x_c, y_c);
+  if (ret != 0) {
+    throw std::runtime_error("The result of lapjv_internal() is invalid.");
+  }
+
+  double opt = 0.0;
+
+  if (n != n_rows) {
+    for (size_t i = 0; i < n; i++) {
+      if (x_c[i] >= n_cols) x_c[i] = -1;
+      if (y_c[i] >= n_rows) y_c[i] = -1;
+    }
+    for (size_t i = 0; i < n_rows; i++) {
+      rowsol[i] = x_c[i];
+    }
+    for (size_t i = 0; i < n_cols; i++) {
+      colsol[i] = y_c[i];
+    }
+
+    if (return_cost) {
+      for (size_t i = 0; i < rowsol.size(); i++) {
+        if (rowsol[i] != -1) {
+          opt += cost_c[i * n_cols + rowsol[i]];
+        }
+      }
+    }
+  } else if (return_cost) {
+    for (size_t i = 0; i < rowsol.size(); i++) {
+      opt += cost_c[i * n_cols + rowsol[i]];
+    }
+  }
+
+  return {std::move(rowsol), std::move(colsol), opt};
 }

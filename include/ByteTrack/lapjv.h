@@ -4,6 +4,9 @@
 #include <vector>
 
 namespace byte_track {
-int lapjv_internal(const size_t n, const std::vector<float>& cost,
-                   std::vector<int>& x, std::vector<int>& y);
+
+std::tuple<std::vector<int>, std::vector<int>, double> exec_lapjv(
+    std::vector<float> &&cost, size_t n_rows, size_t n_cols, bool extend_cost,
+    float cost_limit, bool return_cost);
+
 }

@@ -13,11 +13,11 @@ class KalmanFilter {
   KalmanFilter(float std_weight_position = 1. / 20,
                float std_weight_velocity = 1. / 160);
 
-  void initiate(const RectBase& measurement);
+  void initiate(const TlwhRect& measurement);
 
   TlwhRect predict(bool mean_eight_to_zero);
 
-  TlwhRect update(const RectBase& measurement);
+  TlwhRect update(const TlwhRect& measurement);
 
  private:
   float std_weight_position_;
@@ -32,7 +32,7 @@ class KalmanFilter {
   void project(Matrix<1, 4>& projected_mean,
                Matrix<4, 4>& projected_covariance);
 
-  Matrix<1, 4> rect_to_xyah(const RectBase& rect) const;
+  Matrix<1, 4> rect_to_xyah(const TlwhRect& rect) const;
 
   TlwhRect xyah_to_tlwh(const Matrix<1, 4>& xyah) const;
 };
