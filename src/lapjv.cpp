@@ -299,9 +299,6 @@ int lapjv_internal(const size_t n, const std::vector<float> &cost,
 std::tuple<std::vector<int>, std::vector<int>, double> byte_track::exec_lapjv(
     std::vector<float> &&cost, size_t n_rows, size_t n_cols, bool extend_cost,
     float cost_limit, bool return_cost) {
-  std::vector<int> rowsol(n_rows);
-  std::vector<int> colsol(n_cols);
-
   if (n_rows != n_cols && !extend_cost) {
     throw std::runtime_error("The `extend_cost` variable should set True");
   }
@@ -343,6 +340,8 @@ std::tuple<std::vector<int>, std::vector<int>, double> byte_track::exec_lapjv(
 
   double opt = 0.0;
 
+  std::vector<int> rowsol(n_rows);
+  std::vector<int> colsol(n_cols);
   if (n != n_rows) {
     for (size_t i = 0; i < n; i++) {
       if (x_c[i] >= n_cols) x_c[i] = -1;

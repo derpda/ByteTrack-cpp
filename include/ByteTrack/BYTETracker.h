@@ -115,11 +115,9 @@ class BYTETracker {
         linear_assignment(track_pool, detections, match_thresh_);
 
     std::vector<TrackPtr> matched_tracks;
-    for (const auto &match : matches) {
-      const auto track = match.first;
-      const auto detection = match.second;
-      track->update(detection, frame_id_);
-      matched_tracks.push_back(track);
+    for (auto &match : matches) {
+      match.first->update(match.second, frame_id_);
+      matched_tracks.push_back(match.first);
     }
 
     std::vector<TrackPtr> unmatched_tracked_tracks;
@@ -139,11 +137,9 @@ class BYTETracker {
     auto [matches, unmatched_tracks, unmatch_detection] =
         linear_assignment(unmatched_tracked_tracks, low_score_detections, 0.5);
 
-    for (const auto &match : matches) {
-      const auto track = match.first;
-      const auto detection = match.second;
-      track->update(detection, frame_id_);
-      matched_tracks.push_back(track);
+    for (auto &match : matches) {
+      match.first->update(match.second, frame_id_);
+      matched_tracks.push_back(match.first);
     }
 
     std::vector<TrackPtr> new_lost_tracks;
