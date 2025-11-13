@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ByteTrack/BYTETracker_fwd.h"
 #include "ByteTrack/Detection.h"
 #include "ByteTrack/Rect.h"
 #include "ByteTrack/Track.h"
