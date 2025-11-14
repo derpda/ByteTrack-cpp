@@ -109,6 +109,13 @@ class BYTETracker {
   using InternalTrackPtr = std::shared_ptr<InternalTrack>;
 
  public:
+  BYTETracker() = delete;
+  ~BYTETracker() = default;
+  BYTETracker(const BYTETracker&) = delete;
+  BYTETracker& operator=(const BYTETracker&) = delete;
+  BYTETracker(BYTETracker&&) = default;
+  BYTETracker& operator=(BYTETracker&&) = default;
+
   BYTETracker(int frame_rate = 30, int track_buffer = 30,
               float track_thresh = 0.5, float high_thresh = 0.6,
               float match_thresh = 0.8)
@@ -382,10 +389,10 @@ class BYTETracker {
   }
 
  private:
-  const float track_thresh_;
-  const float high_thresh_;
-  const float match_thresh_;
-  const size_t max_time_lost_;
+  float track_thresh_;
+  float high_thresh_;
+  float match_thresh_;
+  size_t max_time_lost_;
 
   size_t frame_id_;
   size_t track_id_count_;
