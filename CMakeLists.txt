@@ -35,7 +35,6 @@ if(NOT EIGEN3_FOUND)
 endif()
 
 add_library(${PROJECT_NAME} STATIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/Detection.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/KalmanFilter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/lapjv.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/Rect.cpp
